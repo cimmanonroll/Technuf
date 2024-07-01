@@ -1,6 +1,6 @@
 streamlit==1.36.0
 PyMuPDF==1.21.1
-spacy==3.7.5
+spacy
 langchain==0.2.6
 cython
 Ollama
