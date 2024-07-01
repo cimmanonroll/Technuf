@@ -1,3 +1,5 @@
 streamlit
 fitz
-PyMuPDF
+spacy
+langchain_community.llms
+tempfile
