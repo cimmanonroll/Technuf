@@ -3,4 +3,5 @@ fitz
 spacy
 langchain
 langchain_community.llms
+Ollama
 tempfile
