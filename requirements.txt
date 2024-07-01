@@ -2,4 +2,3 @@ streamlit
 fitz
 spacy
 Ollama
-tempfile
