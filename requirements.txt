@@ -1,7 +1,7 @@
-streamlit==1.36.0
-PyMuPDF==1.21.1
+streamlit
+PyMuPDF
 spacy
-langchain==0.2.6
-langchain_community.llms==0.1.0
+langchain
+langchain_community
 cython
 Ollama
