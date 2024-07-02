@@ -74,7 +74,7 @@ def main():
             if st.button("Generate Job Description"):
                 with st.spinner('Generating job posting'):
                     job_posting = get_job_title(pdf_text) + "\n\n" + "Who we are \n Technuf, LLC is a Maryland based SBA certified 8(a) small business company providing leading-edge and proven technologies, industry vertical domain expertise and highly skilled and motivated professionals to achieve our customers mission critical business needs.\n\n"
-                    job_description = "test\n"
+                    job_description = generate_job_description(pdf_text)
                     index_of_newline = job_description.rfind('\n')
                     st.subheader("Generated Job Description")
                     
