@@ -1,5 +1,6 @@
 streamlit
 PyMuPDF
+en_core_web_sm
 spacy
 langchain
 langchain_community
