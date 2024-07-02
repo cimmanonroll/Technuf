@@ -51,7 +51,7 @@ def generate_job_description(text):
     {text}
 
     """
-    url = "http://localhost:11434/api/generate"  # URL of the Ollama server
+    url = "http://localhost:11434/api/chat"  # URL of the Ollama server
 
     try:
         response = requests.post(url, json={"prompt": prompt})
