@@ -80,17 +80,18 @@ def main():
             st.write(pdf_text)
             if st.button("Generate Job Description"):
                 with st.spinner('Generating job posting'):
-                    job_posting = get_job_title(pdf_text) + "\n\n" + "Who we are \n Technuf, LLC is a Maryland based SBA certified 8(a) small business company providing leading-edge and proven technologies, industry vertical domain expertise and highly skilled and motivated professionals to achieve our customers mission critical business needs.\n\n"
+                    # job_posting = get_job_title(pdf_text) + "\n\n" + "Who we are \n Technuf, LLC is a Maryland based SBA certified 8(a) small business company providing leading-edge and proven technologies, industry vertical domain expertise and highly skilled and motivated professionals to achieve our customers mission critical business needs.\n\n"
                     job_description = generate_job_description(pdf_text)
-                    index_of_newline = job_description.rfind('\n')
+                    # index_of_newline = job_description.rfind('\n')
                     st.subheader("Generated Job Description")
                     
-                    if "Preferred:" not in job_description[index_of_newline:]:
-                        job_description = job_description[:index_of_newline]
-                    job_posting += job_description
-                    job_posting += "\n\nBenefits:\nWe offer a competitive pay and benefits package that includes generous paid-time-off including holidays, short-and-long-term disability; group health insurance including medical, dental and vision coverage, training and 401(k) retirement plan. \n"
-                    job_posting += "\nTechnuf is an Equal Opportunity/Affirmative Action Employer. Members of ethnic minorities, women, special disabled veterans, veterans of the Vietnam-era, recently separated veterans, and other protected veterans, persons of disability and/or persons age 40 and over are encouraged to apply.\n"
-                    st.write(job_posting)
+                    #if "Preferred:" not in job_description[index_of_newline:]:
+                    #    job_description = job_description[:index_of_newline]
+                    #job_posting += job_description
+                    #job_posting += "\n\nBenefits:\nWe offer a competitive pay and benefits package that includes generous paid-time-off including holidays, short-and-long-term disability; group health insurance including medical, dental and vision coverage, training and 401(k) retirement plan. \n"
+                    #job_posting += "\nTechnuf is an Equal Opportunity/Affirmative Action Employer. Members of ethnic minorities, women, special disabled veterans, veterans of the Vietnam-era, recently separated veterans, and other protected veterans, persons of disability and/or persons age 40 and over are encouraged to apply.\n"
+                    #st.write(job_posting)
+                    st.write(job_description)
         else:
             st.error("No text found in the uploaded PDF.")
 
