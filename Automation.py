@@ -51,7 +51,7 @@ def generate_job_description(text):
 
     """
     prompt += "<|eot_id|><|start_header_id|>assistant<|end_header_id|>"
-    response = llm.invoke(prompt)
+    response = llm.invoke("Tell me a joke")
     return response
 #changes NEEDED
 
