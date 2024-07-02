@@ -7,7 +7,7 @@ import tempfile
 
 nlp = spacy.load("en_core_web_sm")
 
-llm = Ollama(model="llama3")
+llm = Ollama(model="llama3", base_url="http://ollama-container:11434")
 
 # Gets the job title from the text
 def get_job_title(text):
