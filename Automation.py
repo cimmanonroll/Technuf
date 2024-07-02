@@ -1,6 +1,7 @@
 import streamlit as st
 import fitz  # PyMuPDF
 import spacy
+import requests
 from langchain_community.llms import Ollama
 import tempfile
 
@@ -50,9 +51,15 @@ def generate_job_description(text):
     {text}
 
     """
-    prompt += "<|eot_id|><|start_header_id|>assistant<|end_header_id|>"
-    response = llm.invoke(prompt)
-    return response
+    url = "http://localhost:11434/api/generate"  # URL of the Ollama server
+
+    try:
+        response = requests.post(url, json={"prompt": prompt})
+        response.raise_for_status()  # Check for HTTP errors
+        return response.json()["generated_text"]
+    except requests.exceptions.RequestException as e:
+        st.error(f"Error generating job description: {e}")
+        return None
 #changes NEEDED
 
 def main():
