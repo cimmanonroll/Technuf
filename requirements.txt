@@ -1,9 +1,13 @@
 streamlit
 PyMuPDF
-requests
-spacy==3.5.0
-https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.5.0/en_core_web_sm-3.5.0-py3-none-any.whl
-langchain
-langchain_community
-cython
-Ollama
+spacy
+python-docx
+openai
+python-dotenv
+docxtpl
+streamlit_authenticator
+PyYAML
+spacy download en_core_web_sm
+re
+io
+os
