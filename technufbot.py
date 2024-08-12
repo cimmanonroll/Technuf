@@ -23,7 +23,13 @@ os.environ["OPENAI_API_KEY"] = os.getenv('OPENAI_API_KEY')
 client = OpenAI()
 nlp = spacy.load("en_core_web_sm")
 def get_job_title_pdf(text):
-    # Extracts the job title from a PDF document
+    """ Extracts the job title from a PDF document using NLP 
+    
+    :param text: String text from a file
+    :type text: string
+    :return: Returns the title from that PDF file, if not found, returns "No job title found"
+    :rtype: string
+    """
     doc = nlp(text)
     job_title = []
     capture = False
@@ -40,7 +46,13 @@ def get_job_title_pdf(text):
     return job_title[index + 1]
 
 def get_job_title_docx(text):
-    # Extracts the job title from a docx document
+    """ Extracts the job title from a docx document using NLP 
+    
+    :param text: String text from a file
+    :type text: string
+    :return: Returns the title from that docx file, if not found, returns "No job title found"
+    :rtype: string
+    """
     doc = nlp(text)
     job_title = []
     capture = False
@@ -59,12 +71,24 @@ def get_job_title_docx(text):
 
 # Sanitize resume for security (?), using a delimiter (############) and removing all instances of "prompt" and "ignore"
 def extract_text_from_docx(docx_path):
-    # Extracts all text from a docx file into a string
+    """ Extracts all text from a docx file into a string 
+    
+    :param docx_path: File path to the docx file
+    :type docx_path: string
+    :return: Returns the text from that docx file
+    :rtype: string
+    """
     doc = Document(docx_path)
     return '\n'.join([paragraph.text for paragraph in doc.paragraphs])
 
 def extract_text_from_pdf(file_path):
-    # Extracts all text from a PDF file into a string
+    """ Extracts all text from a PDF file into a string 
+    
+    :param file_path: File path to the PDF file
+    :type file_path: string
+    :return: Returns the text from that PDF file
+    :rtype: string
+    """
     pdf_document = fitz.open(file_path)
     text = ""
     for page_num in range(pdf_document.page_count):
@@ -73,7 +97,13 @@ def extract_text_from_pdf(file_path):
     return text
 
 def extract_relevant_sections(text):
-    # Extracts "Scope of Work" and other required sections given a text string
+    """ Extracts "Scope of Work" and other required sections given a text string 
+    
+    :param text: String text from a file
+    :type text: string
+    :return: Returns the relevant sections of that text, if none, will return empty string
+    :rtype: string
+    """
     pattern = re.compile(r'(Scope of Work.*?)(Experience.*?|)(Additionally.*?|)(?=\nDeliverables|$)', re.DOTALL)
     match = pattern.search(text)
     if match:
@@ -84,7 +114,15 @@ def extract_relevant_sections(text):
     return ""
 
 def generate_resume_descriptions(resume, job_description):
-    # Generates a resume description using OpenAI API for a candidate given a resume string and the job description string
+    """ Generates a resume description using OpenAI API for a candidate given a resume string and the job description string
+     
+    :param resume: Resume from a file
+    :type resume: string
+    :param job_description: The generated job description
+    :type job_description: string
+    :return: OpenAI generated resume description
+    :rtype: string
+    """
     instruction = f""" 
     Generate three paragraphs describing the job candidate's ability to perform their job well given a resume delimited by double quotes and a job description delimited by double quotes. 
     You will only reply in the following format based on the example given, do not include any unecessary greetings or introductions: 
@@ -134,7 +172,19 @@ def generate_resume_descriptions(resume, job_description):
 #   Paragraph 2: Candidate capabilities and adeptness
 #   Paragraph 3: Technuf (?) team ablities and how they help us perform the job well
 def generate_sos(job_description, data, num, job_title):
-    # Generates a scope of services given a job_description string, a data dict, a num int, and a job title string
+    """ Generates a scope of services given a job_description string, a data dict, a num int, and a job title string 
+    
+    :param job_description: The generated job description
+    :type job_description: string
+    :param data: The dict of content that we will be replacing in the template
+    :type data: dict
+    :param num: Number of candidates (up to 3)
+    :type num: int
+    :param job_title: The extracted job title
+    :type job_title: string
+    :return: OpenAI generated sos 
+    :rtype: string
+    """
     instruction = f""" 
     You are writing an understanding of the scope of services given a job description delimited by double quotes based on the abilities of the candidates given their summaries delimited by double quotes. 
     You will only reply in the following format totaling 3 paragraphs, do not include any unecessary greetings or introductions:
@@ -158,7 +208,13 @@ def generate_sos(job_description, data, num, job_title):
     return response.choices[0].message.content
 
 def get_title_page_info(text):
-    # Extracts all necessary information from the text string and stores it in a dict
+    """ Extracts all necessary information from the text string and stores it in a dict 
+    
+    :param text: String text from a file
+    :type text: string
+    :return: Returns the title page information stored in a dict
+    :rtype: dict
+    """
     title_info = {}
     topr_num_index = text.find("TOPR Number:")
     dept_index = text.find("Using Department:")
@@ -186,7 +242,13 @@ def get_title_page_info(text):
     return title_info
 
 def format_resume(resume):
-    # Takes a resume string and reformats that resume to the format that Technuf uses
+    """ Takes a resume string and reformats that resume to the format that Technuf uses 
+    
+    :param resume: String text from a resume file
+    :type resume: string
+    :return: OpenAI generated response formatting the resume
+    :rtype: string
+    """
     instruction = f""" 
     You are a resume formatter at Technuf LLC that needs to take a given resume delimited by double quotes and return it in the proper formatting shown below in brackets. Do not include the brackets in the actual response. Each section will be separated with two newlines so that there are 5 sections total: name, qualifications, education, skills, work experience, do not change this. You will only reply in the following format, do not include any unecessary greetings or introductions: 
     [Name of person on resume]
@@ -214,7 +276,15 @@ def format_resume(resume):
     return response.choices[0].message.content
 
 def generate_interview_questions(job_description, resume):
-    # Generates interview questions and answers given a job_description string and a resume string
+    """ Generates interview questions and answers given a job_description string and a resume string 
+    
+    :param job_description: The generated job description
+    :type job_description: string
+    :param resume: String text from a resume file
+    :type resume: string
+    :return: OpenAI generated interview questions
+    :rtype: string
+    """
     skills_index = job_description.index("Responsibilities:")
     end_index = job_description.index("Education")
     job_description = job_description[skills_index:end_index - 1]
@@ -232,7 +302,7 @@ def generate_interview_questions(job_description, resume):
     name = response.choices[0].message.content
     
     instruction = f"""
-    You are an interviewer at Technuf LLC that needs to curate interview questions to ask a candidate based on their resume and a given job description.
+    You are an interviewer at Technuf LLC and an SME on this specific job that needs to curate interview questions to ask a candidate based on their resume and a given job description.
     According to this job description:
     {job_description}. 
     """
@@ -253,7 +323,13 @@ def generate_interview_questions(job_description, resume):
 
 # TODO: Also add LinkedIn job posting here
 def generate_job_description(text):
-    # Generates a job description string in the Technuf format given a text string
+    """ Generates a job description string in the Technuf format given a text string 
+    
+    :param text: String text from a file
+    :type text: string
+    :return: Returns the OpenAI generated job description
+    :rtype: string
+    """
     instruction = f"""
     You are a recruiter working at Technuf LLC. Only answer with the template given. Ensure to exclude any mention of Evaluation Criteria, How to Apply, Note, Contractor, Contract Staff, and Interview Criteria.
     You are tasked with generating a job posting following the format given, using information based on the solicitation requirements given. Reply in the following format, making sure that each bullet point should be on a new line, and every section should be separated with a new line, and each colon should have a new line after it: 
@@ -293,7 +369,13 @@ def generate_job_description(text):
     return response.choices[0].message.content
 
 def fill_document(template_path, data):
-    # Fills a word document template with the data dict given a template_path, and lets you download the docx file
+    """ Fills a word document template with the data dict given a template_path, and lets you download the docx file 
+    
+    :param template_path: path of template file
+    :type template_path: string
+    :param data: dict of data to replace in the template
+    :type data: dict
+    """
     doc = DocxTemplate(template_path)
     # This code prevents XML errors since docxtpl can't read in '&' symbols
     for key in data:
@@ -322,7 +404,13 @@ def fill_document(template_path, data):
     pdf_viewer(pdf, height=500)
     
 def download_interview_questions(text, name):
-    # Option to download interview questions generated given a text string
+    """ Option to download interview questions generated given a text string 
+    
+    :param text: interview questions that were generated
+    :type text: string
+    :param name: name of candidate
+    :type name: string
+    """
     doc = Document()
     doc.add_paragraph(text)
     bio = io.BytesIO()
@@ -335,9 +423,21 @@ def download_interview_questions(text, name):
             file_name= name + "'s Interview Q and A.docx",
             mime="docx"
         )
-def generate_proposal(resumes, concise_job_description, job_title):
-    # Generates the proposal given up to 3 resume strings, a concise_job_description string, and a job_title string
-    # This returns a data dict with all of the necessary information 
+        
+
+def generate_proposal(resumes, concise_job_description, job_title): 
+    """ Generates the proposal given up to 3 resume strings, a concise_job_description string, and a job_title string
+    This returns a data dict with all of the necessary information 
+    
+    :param resumes: list of resumes
+    :type resumes: list
+    :param concise_job_description: a concise version of the job description with uncessary info removed
+    :type concise_job_description: string
+    :param job_title: job title extracted from the file
+    :type job_title: string
+    :return: dict with all the data needed to generate the proposal
+    :rtype: dict
+    """
     concise_data = ""
     resume_count = 0
     for resume in resumes:
@@ -393,11 +493,10 @@ def generate_proposal(resumes, concise_job_description, job_title):
     })
     return data
 
-# TODO: Button for unformatted proposal response, formatted proposal response, input resume to format it
-# Focus on input resume + linkedin for now
 def main():
-    # Main function that has a login page and all of the streamlit elements
-    hashed_passwords = Hasher(['Technuf123@']).generate()
+    """ Main function that has a login page and all of the streamlit elements """
+    pswd = os.getenv('password')
+    hashed_passwords = Hasher([pswd]).generate()
     credentials = {
     "credentials": {
       'usernames': {
@@ -430,13 +529,6 @@ def main():
   }
     
     authenticator = stauth.Authenticate(credentials['credentials'],'some_cookie_name','some_signature_key',cookie_expiry_days=30,pre_authorized=["proposals@technuf.com"])
-    # authenticator = stauth.Authenticate(
-    #     config["credentials"],
-    #     config["cookie"]["name"],
-    #     config["cookie"]["key"],
-    #     config["cookie"]["expiry_days"],
-    #     config["pre-authorized"]
-    # )
     authenticator.login()
     
     if st.session_state['authentication_status']:
@@ -474,6 +566,12 @@ def main():
                 interview_question_button = st.button("Generate Interview Questions")
             with button_col3:
                 resume_upload_btn = st.button("Generate Proposal")
+            if job_desc_button:
+                st.session_state.last_pressed_button = "job_desc"
+            elif interview_question_button:
+                st.session_state.last_pressed_button = "interview"
+            elif resume_upload_btn:
+                st.session_state.last_pressed_button = "resume_upload"
             # Parses through based on .pdf or .docx file
             if solicitation_file.name.endswith('.pdf'):
                 with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_file:
@@ -492,14 +590,13 @@ def main():
             # If scope of work is found, it will extract it and print it while filtering out the words contract staff
             relevant_sections = extract_relevant_sections(pdf_text)
             if relevant_sections:
-                st.session_state.last_pressed_button = "job_desc"
                 job_description = ""
                 relevant_lines = relevant_sections.split('\n')
                 filtered_lines = [line for line in relevant_lines if not ('contract staff' in line.lower())]
                 relevant_sections = '\n'.join(filtered_lines)
                 st.session_state['display_text'] = relevant_sections
                 st.session_state['text_area_label'] = "Extracted Relevant Sections:"
-                if job_desc_button:
+                if st.session_state.last_pressed_button == "job_desc":
                     st.session_state.job_button = True
                     with st.spinner('Generating job posting'):
                         job_posting = ""
@@ -509,7 +606,6 @@ def main():
                             # Checks to see if there is an extra Note added on the end, and will remove it if there is
                             if job_description.find("Note:") != -1:
                                 job_description = job_description[:job_description.find("Note:") + 1]
-                            # st.subheader("Generated Job Description")
                             job_posting += job_description
                             job_posting += "\n\nBenefits:\n\nWe offer a competitive pay and benefits package that includes generous paid-time-off including holidays, short-and-long-term disability; group health insurance including medical, dental and vision coverage, training and 401(k) retirement plan. \n"
                             job_posting += "\nTechnuf is an Equal Opportunity/Affirmative Action Employer. Members of ethnic minorities, women, special disabled veterans, veterans of the Vietnam-era, recently separated veterans, and other protected veterans, persons of disability and/or persons age 40 and over are encouraged to apply.\n"
@@ -519,17 +615,29 @@ def main():
                             st.session_state['job_posting'] = job_posting
                         else: 
                             job_posting = st.session_state.job_posting
-                       
-                        st.session_state['text_area_label'] = "Generated Job Description:"
-                        st.session_state['display_text'] = job_posting
+                    
+                    regen_job_desc_button = st.button("Regenerate Job Description")
+                    if regen_job_desc_button:
+                        with st.spinner('Regenerating job posting'):
+                            job_posting = ""
+                            job_posting = st.session_state.job_title + "\n\n"
+                            job_description = generate_job_description(relevant_sections)
+                            # Checks to see if there is an extra Note added on the end, and will remove it if there is
+                            if job_description.find("Note:") != -1:
+                                job_description = job_description[:job_description.find("Note:") + 1]
+                            job_posting += job_description
+                            job_posting += "\n\nBenefits:\n\nWe offer a competitive pay and benefits package that includes generous paid-time-off including holidays, short-and-long-term disability; group health insurance including medical, dental and vision coverage, training and 401(k) retirement plan. \n"
+                            job_posting += "\nTechnuf is an Equal Opportunity/Affirmative Action Employer. Members of ethnic minorities, women, special disabled veterans, veterans of the Vietnam-era, recently separated veterans, and other protected veterans, persons of disability and/or persons age 40 and over are encouraged to apply.\n"
+                            newline_index = job_posting.find("Preferred")
+                            if newline_index:
+                                job_posting = job_posting[:newline_index] + "\n" + job_posting[newline_index:]
+                            st.session_state['job_posting'] = job_posting
+                    st.session_state['text_area_label'] = "Generated Job Description:"
+                    st.session_state['display_text'] = job_posting
             else:
                 st.error("No relevant sections found in the uploaded PDF.")
             # Upload resume to generate interview questions
             
-            if interview_question_button:
-                st.session_state.last_pressed_button = "interview"
-            elif resume_upload_btn:
-                st.session_state.last_pressed_button = "resume_upload"
             if st.session_state.last_pressed_button == "interview":
                 if "job_posting" not in st.session_state:
                     with st.spinner('Currently loading...'):
