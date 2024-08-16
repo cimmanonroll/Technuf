@@ -22,6 +22,7 @@ load_dotenv()
 os.environ["OPENAI_API_KEY"] = os.getenv('OPENAI_API_KEY')
 client = OpenAI()
 nlp = spacy.load("en_core_web_sm")
+ai_model = "gpt-4o-mini"
 def get_job_title_pdf(text):
     """ Extracts the job title from a PDF document using NLP 
     
@@ -157,7 +158,7 @@ def generate_resume_descriptions(resume, job_description):
     ""{job_description}""
     """
     response = client.chat.completions.create(
-        model="gpt-4o-mini",
+        model=ai_model,
         messages=[
             {"role": "system", "content": instruction},
             {"role": "user", "content": prompt}
@@ -197,7 +198,7 @@ def generate_sos(job_description, data, num, job_title):
     ""{data}""
     """
     response = client.chat.completions.create(
-        model="gpt-4o-mini",
+        model=ai_model,
         messages=[
             {"role": "system", "content": instruction},
             {"role": "user", "content": prompt}
@@ -265,7 +266,7 @@ def format_resume(resume):
     ""{resume}""
     """
     response = client.chat.completions.create(
-        model="gpt-4o-mini",
+        model=ai_model,
         messages=[
             {"role": "system", "content": instruction},
             {"role": "user", "content": prompt}
@@ -293,7 +294,7 @@ def generate_interview_questions(job_description, resume):
     What is the name on this given resume? {resume}
     """
     response = client.chat.completions.create(
-        model="gpt-4o-mini",
+        model=ai_model,
         messages=[
             {"role": "system", "content": "You will only answer the question asked with only the answer. Do not include any filler words or greetings"},
             {"role": "user", "content": prompt}
@@ -311,7 +312,7 @@ def generate_interview_questions(job_description, resume):
     {resume}
     """
     response = client.chat.completions.create(
-        model="gpt-4o-mini",
+        model=ai_model,
         messages=[
             {"role": "system", "content": instruction},
             {"role": "user", "content": prompt}
@@ -358,7 +359,7 @@ def generate_job_description(text):
     {text}
     """
     response = client.chat.completions.create(
-        model="gpt-4o-mini",
+        model=ai_model,
         messages=[
             {"role": "system", "content": instruction},
             {"role": "user", "content": prompt}
@@ -380,10 +381,8 @@ def fill_document(template_path, data):
     # This code prevents XML errors since docxtpl can't read in '&' symbols
     for key in data:
         data[key] = data[key].replace("&", "and")
-        
     doc.render(data)
     
-
     # Makes the docx file downloadable
     bio = io.BytesIO()
     doc.save(bio)
@@ -401,7 +400,7 @@ def fill_document(template_path, data):
     bio.seek(0)
     result = mammoth.convert_to_html(bio)
     pdf = pdfkit.from_string(result.value)
-    pdf_viewer(pdf, height=500)
+    pdf_viewer(pdf, height=700)
     
 def download_interview_questions(text, name):
     """ Option to download interview questions generated given a text string 
@@ -422,8 +421,7 @@ def download_interview_questions(text, name):
             data=bio.getvalue(),
             file_name= name + "'s Interview Q and A.docx",
             mime="docx"
-        )
-        
+        ) 
 
 def generate_proposal(resumes, concise_job_description, job_title): 
     """ Generates the proposal given up to 3 resume strings, a concise_job_description string, and a job_title string
@@ -487,7 +485,6 @@ def generate_proposal(resumes, concise_job_description, job_title):
             concise_data += data["resume_name_3"] + ": " + data["resume_qualifications_3"] + "\n" + data["resume_skills_3"]
             data.update({'resume_description_3' : generate_resume_descriptions(resume, concise_job_description)})
         resume_count += 1
-                        
     data.update({
         'sos_understanding' : generate_sos(concise_job_description, concise_data, resume_count, job_title)
     })
@@ -615,7 +612,6 @@ def main():
                             st.session_state['job_posting'] = job_posting
                         else: 
                             job_posting = st.session_state.job_posting
-                    
                     regen_job_desc_button = st.button("Regenerate Job Description")
                     if regen_job_desc_button:
                         with st.spinner('Regenerating job posting'):
@@ -637,7 +633,6 @@ def main():
             else:
                 st.error("No relevant sections found in the uploaded PDF.")
             # Upload resume to generate interview questions
-            
             if st.session_state.last_pressed_button == "interview":
                 if "job_posting" not in st.session_state:
                     with st.spinner('Currently loading...'):
@@ -716,7 +711,6 @@ def main():
                 st.text_area(label=st.session_state.text_area_label, key="display_text", height=350)
         else:
             st.session_state.disabled = True
-        
     elif st.session_state["authentication_status"] is False:
         st.error('Username/password is incorrect')
     elif st.session_state["authentication_status"] is None:
