@@ -7,7 +7,8 @@ python-dotenv
 docxtpl
 streamlit_authenticator
 PyYAML
-spacy download en_core_web_sm
-re
-io
-os
+mammoth
+streamlit-pdf-viewer
+sphinx
+sphinx_rtd_theme
+pdfkit
