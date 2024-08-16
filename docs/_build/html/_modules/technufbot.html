@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>technufbot &mdash; Technuf Proposal Bot 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=8d563738"></script>
+        <script src="../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Technuf Proposal Bot
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../modules.html">technufbot</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Technuf Proposal Bot</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Module code</a></li>
+      <li class="breadcrumb-item active">technufbot</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for technufbot</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">streamlit</span> <span class="k">as</span> <span class="nn">st</span>
+<span class="kn">import</span> <span class="nn">fitz</span>  <span class="c1"># PyMuPDF</span>
+<span class="kn">import</span> <span class="nn">spacy</span>
+<span class="kn">import</span> <span class="nn">tempfile</span>
+<span class="kn">from</span> <span class="nn">docx</span> <span class="kn">import</span> <span class="n">Document</span>
+<span class="kn">from</span> <span class="nn">openai</span> <span class="kn">import</span> <span class="n">OpenAI</span>
+<span class="kn">from</span> <span class="nn">dotenv</span> <span class="kn">import</span> <span class="n">load_dotenv</span>
+<span class="kn">from</span> <span class="nn">docxtpl</span> <span class="kn">import</span> <span class="n">DocxTemplate</span>
+<span class="kn">import</span> <span class="nn">streamlit_authenticator</span> <span class="k">as</span> <span class="nn">stauth</span>
+<span class="kn">from</span> <span class="nn">streamlit_authenticator.utilities.hasher</span> <span class="kn">import</span> <span class="n">Hasher</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">io</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">yaml</span>
+<span class="kn">from</span> <span class="nn">yaml.loader</span> <span class="kn">import</span> <span class="n">SafeLoader</span>
+<span class="kn">import</span> <span class="nn">mammoth</span>
+<span class="kn">import</span> <span class="nn">pdfkit</span>
+<span class="kn">from</span> <span class="nn">streamlit_pdf_viewer</span> <span class="kn">import</span> <span class="n">pdf_viewer</span>
+
+<span class="n">load_dotenv</span><span class="p">()</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;OPENAI_API_KEY&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">&#39;OPENAI_API_KEY&#39;</span><span class="p">)</span>
+<span class="n">client</span> <span class="o">=</span> <span class="n">OpenAI</span><span class="p">()</span>
+<span class="n">nlp</span> <span class="o">=</span> <span class="n">spacy</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">&quot;en_core_web_sm&quot;</span><span class="p">)</span>
+<span class="n">ai_model</span> <span class="o">=</span> <span class="s2">&quot;gpt-4o-mini&quot;</span>
+<div class="viewcode-block" id="get_job_title_pdf">
+<a class="viewcode-back" href="../technufbot.html#technufbot.get_job_title_pdf">[docs]</a>
+<span class="k">def</span> <span class="nf">get_job_title_pdf</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot; Extracts the job title from a PDF document using NLP </span>
+<span class="sd">    </span>
+<span class="sd">    :param text: String text from a file</span>
+<span class="sd">    :type text: string</span>
+<span class="sd">    :return: Returns the title from that PDF file, if not found, returns &quot;No job title found&quot;</span>
+<span class="sd">    :rtype: string</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">doc</span> <span class="o">=</span> <span class="n">nlp</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+    <span class="n">job_title</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">capture</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">for</span> <span class="n">sent</span> <span class="ow">in</span> <span class="n">doc</span><span class="o">.</span><span class="n">sents</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s2">&quot;title&quot;</span> <span class="ow">in</span> <span class="n">sent</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
+            <span class="n">capture</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="n">capture</span><span class="p">:</span>
+            <span class="n">job_title</span> <span class="o">=</span> <span class="n">sent</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="k">break</span>
+    <span class="n">job_title</span> <span class="o">=</span> <span class="n">job_title</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">job_title</span><span class="p">)):</span>
+        <span class="n">job_title</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">job_title</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="n">index</span> <span class="o">=</span> <span class="n">job_title</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">&quot;Task Order Title:&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">job_title</span><span class="p">[</span><span class="n">index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="get_job_title_docx">
+<a class="viewcode-back" href="../technufbot.html#technufbot.get_job_title_docx">[docs]</a>
+<span class="k">def</span> <span class="nf">get_job_title_docx</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot; Extracts the job title from a docx document using NLP </span>
+<span class="sd">    </span>
+<span class="sd">    :param text: String text from a file</span>
+<span class="sd">    :type text: string</span>
+<span class="sd">    :return: Returns the title from that docx file, if not found, returns &quot;No job title found&quot;</span>
+<span class="sd">    :rtype: string</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">doc</span> <span class="o">=</span> <span class="n">nlp</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+    <span class="n">job_title</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">capture</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">for</span> <span class="n">sent</span> <span class="ow">in</span> <span class="n">doc</span><span class="o">.</span><span class="n">sents</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s2">&quot;title&quot;</span> <span class="ow">in</span> <span class="n">sent</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
+            <span class="n">capture</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="n">capture</span><span class="p">:</span>
+            <span class="n">job_title</span> <span class="o">=</span> <span class="n">sent</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="k">break</span>
+    <span class="n">job_title</span> <span class="o">=</span> <span class="n">job_title</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;: &quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">job_title</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">i</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;Task Order Title&quot;</span><span class="p">)</span> <span class="p">:</span>
+            <span class="n">new_line_index</span> <span class="o">=</span> <span class="n">i</span><span class="o">.</span><span class="n">rfind</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">i</span><span class="p">[</span><span class="n">new_line_index</span> <span class="o">+</span> <span class="mi">18</span><span class="p">:]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>    
+    <span class="k">return</span> <span class="s2">&quot;No job title found&quot;</span></div>
+
+
+<span class="c1"># Sanitize resume for security (?), using a delimiter (############) and removing all instances of &quot;prompt&quot; and &quot;ignore&quot;</span>
+<div class="viewcode-block" id="extract_text_from_docx">
+<a class="viewcode-back" href="../technufbot.html#technufbot.extract_text_from_docx">[docs]</a>
+<span class="k">def</span> <span class="nf">extract_text_from_docx</span><span class="p">(</span><span class="n">docx_path</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot; Extracts all text from a docx file into a string </span>
+<span class="sd">    </span>
+<span class="sd">    :param docx_path: File path to the docx file</span>
+<span class="sd">    :type docx_path: string</span>
+<span class="sd">    :return: Returns the text from that docx file</span>
+<span class="sd">    :rtype: string</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">doc</span> <span class="o">=</span> <span class="n">Document</span><span class="p">(</span><span class="n">docx_path</span><span class="p">)</span>
+    <span class="k">return</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">paragraph</span><span class="o">.</span><span class="n">text</span> <span class="k">for</span> <span class="n">paragraph</span> <span class="ow">in</span> <span class="n">doc</span><span class="o">.</span><span class="n">paragraphs</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="extract_text_from_pdf">
+<a class="viewcode-back" href="../technufbot.html#technufbot.extract_text_from_pdf">[docs]</a>
+<span class="k">def</span> <span class="nf">extract_text_from_pdf</span><span class="p">(</span><span class="n">file_path</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot; Extracts all text from a PDF file into a string </span>
+<span class="sd">    </span>
+<span class="sd">    :param file_path: File path to the PDF file</span>
+<span class="sd">    :type file_path: string</span>
+<span class="sd">    :return: Returns the text from that PDF file</span>
+<span class="sd">    :rtype: string</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">pdf_document</span> <span class="o">=</span> <span class="n">fitz</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
+    <span class="n">text</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">page_num</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">pdf_document</span><span class="o">.</span><span class="n">page_count</span><span class="p">):</span>
+        <span class="n">page</span> <span class="o">=</span> <span class="n">pdf_document</span><span class="o">.</span><span class="n">load_page</span><span class="p">(</span><span class="n">page_num</span><span class="p">)</span>
+        <span class="n">text</span> <span class="o">+=</span> <span class="n">page</span><span class="o">.</span><span class="n">get_text</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">text</span></div>
+
+
+<div class="viewcode-block" id="extract_relevant_sections">
+<a class="viewcode-back" href="../technufbot.html#technufbot.extract_relevant_sections">[docs]</a>
+<span class="k">def</span> <span class="nf">extract_relevant_sections</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot; Extracts &quot;Scope of Work&quot; and other required sections given a text string </span>
+<span class="sd">    </span>
+<span class="sd">    :param text: String text from a file</span>
+<span class="sd">    :type text: string</span>
+<span class="sd">    :return: Returns the relevant sections of that text, if none, will return empty string</span>
+<span class="sd">    :rtype: string</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;(Scope of Work.*?)(Experience.*?|)(Additionally.*?|)(?=\nDeliverables|$)&#39;</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">DOTALL</span><span class="p">)</span>
+    <span class="n">match</span> <span class="o">=</span> <span class="n">pattern</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">match</span><span class="p">:</span>
+        <span class="n">scope_of_work</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="n">skills_experience</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="n">additionally_successful</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">scope_of_work</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="n">skills_experience</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="n">additionally_successful</span>
+    <span class="k">return</span> <span class="s2">&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="generate_resume_descriptions">
+<a class="viewcode-back" href="../technufbot.html#technufbot.generate_resume_descriptions">[docs]</a>
+<span class="k">def</span> <span class="nf">generate_resume_descriptions</span><span class="p">(</span><span class="n">resume</span><span class="p">,</span> <span class="n">job_description</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot; Generates a resume description using OpenAI API for a candidate given a resume string and the job description string</span>
+<span class="sd">     </span>
+<span class="sd">    :param resume: Resume from a file</span>
+<span class="sd">    :type resume: string</span>
+<span class="sd">    :param job_description: The generated job description</span>
+<span class="sd">    :type job_description: string</span>
+<span class="sd">    :return: OpenAI generated resume description</span>
+<span class="sd">    :rtype: string</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">instruction</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot; </span>
+<span class="s2">    Generate three paragraphs describing the job candidate&#39;s ability to perform their job well given a resume delimited by double quotes and a job description delimited by double quotes. </span>
+<span class="s2">    You will only reply in the following format based on the example given, do not include any unecessary greetings or introductions: </span>
+<span class="s2">    Mr. Aizaz Ur Rahman is a dynamic and results-oriented Kronos Configuration Consultant with</span>
+<span class="s2">    over seven (7) years of hands-on experience specializing in Kronos Workforce Central and</span>
+<span class="s2">    Dimensions. He demonstrates expertise in system administration, user management, and</span>
+<span class="s2">    configuring modules such as timekeeping, scheduling, and labor analytics. Mr. Rahman is skilled</span>
+<span class="s2">    in creating and optimizing SQL queries and stored procedures in MSSQL to support complex</span>
+<span class="s2">    timekeeping processes and reporting requirements. He possesses an extensive background in</span>
+<span class="s2">    integrating Kronos Time &amp;amp; Attendance with HR and payroll systems using Kronos APIs and</span>
+<span class="s2">    interfaces, ensuring seamless data flow and accuracy across platforms. Proficient in utilizing Pro</span>
+<span class="s2">    WFM (Dimensions) and Boomi platforms to enhance system functionalities and support</span>
+<span class="s2">    operational needs.</span>
+<span class="s2">    Mr. Rahman has demonstrated success in managing full lifecycle upgrades of Kronos systems,</span>
+<span class="s2">    from planning and configuration to testing and deployment, ensuring minimal disruption and</span>
+<span class="s2">    maximum efficiency. He is adept at creating and modifying system configurations, including pay</span>
+<span class="s2">    rules, work rules, and assignment rules, to align with evolving requirements. Mr. Rahman</span>
+<span class="s2">    possesses strong analytical skills that he applies to troubleshoot system errors, resolve technical</span>
+<span class="s2">    issues, and optimize performance to uphold system integrity and reliability. He is also</span>
+<span class="s2">    experienced in providing comprehensive training and support to staff and end-users, empowering</span>
+<span class="s2">    them to leverage Kronos systems effectively. He is an effective communicator with a</span>
+<span class="s2">    collaborative approach, adept at working across departments to gather requirements, design</span>
+<span class="s2">    solutions, and implement system enhancements. He possesses a proven ability to create detailed</span>
+<span class="s2">    documentation, including reports, training materials, and system documentation, to facilitate</span>
+<span class="s2">    smooth operations and knowledge transfer.</span>
+<span class="s2">    Mr. Rahman&#39;s keen attention to detail, comprehensive skill set, commitment to continuous</span>
+<span class="s2">    improvement, and proven track record make him a valuable asset in driving efficiency and</span>
+<span class="s2">    compliance within Montgomery County&#39;s workforce management processes.</span>
+<span class="s2">    &quot;&quot;&quot;</span>
+    <span class="n">prompt</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot; </span>
+<span class="s2">    &quot;&quot;</span><span class="si">{</span><span class="n">resume</span><span class="si">}</span><span class="s2">&quot;&quot;</span>
+<span class="s2">    &quot;&quot;</span><span class="si">{</span><span class="n">job_description</span><span class="si">}</span><span class="s2">&quot;&quot;</span>
+<span class="s2">    &quot;&quot;&quot;</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">chat</span><span class="o">.</span><span class="n">completions</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+        <span class="n">model</span><span class="o">=</span><span class="n">ai_model</span><span class="p">,</span>
+        <span class="n">messages</span><span class="o">=</span><span class="p">[</span>
+            <span class="p">{</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;system&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="n">instruction</span><span class="p">},</span>
+            <span class="p">{</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="n">prompt</span><span class="p">}</span>
+        <span class="p">]</span>
+    <span class="p">)</span>
+    <span class="n">total_tokens</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">usage</span><span class="o">.</span><span class="n">total_tokens</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">total_tokens</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">response</span><span class="o">.</span><span class="n">choices</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">message</span><span class="o">.</span><span class="n">content</span></div>
+
+
+<span class="c1"># SOS generation: </span>
+<span class="c1">#   Paragraph 1: &quot;Technuf provides # highly qualified candidates with strong experience in [job]&quot;</span>
+<span class="c1">#   Paragraph 2: Candidate capabilities and adeptness</span>
+<span class="c1">#   Paragraph 3: Technuf (?) team ablities and how they help us perform the job well</span>
+<div class="viewcode-block" id="generate_sos">
+<a class="viewcode-back" href="../technufbot.html#technufbot.generate_sos">[docs]</a>
+<span class="k">def</span> <span class="nf">generate_sos</span><span class="p">(</span><span class="n">job_description</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">num</span><span class="p">,</span> <span class="n">job_title</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot; Generates a scope of services given a job_description string, a data dict, a num int, and a job title string </span>
+<span class="sd">    </span>
+<span class="sd">    :param job_description: The generated job description</span>
+<span class="sd">    :type job_description: string</span>
+<span class="sd">    :param data: The dict of content that we will be replacing in the template</span>
+<span class="sd">    :type data: dict</span>
+<span class="sd">    :param num: Number of candidates (up to 3)</span>
+<span class="sd">    :type num: int</span>
+<span class="sd">    :param job_title: The extracted job title</span>
+<span class="sd">    :type job_title: string</span>
+<span class="sd">    :return: OpenAI generated sos </span>
+<span class="sd">    :rtype: string</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">instruction</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot; </span>
+<span class="s2">    You are writing an understanding of the scope of services given a job description delimited by double quotes based on the abilities of the candidates given their summaries delimited by double quotes. </span>
+<span class="s2">    You will only reply in the following format totaling 3 paragraphs, do not include any unecessary greetings or introductions:</span>
+<span class="s2">    The first paragraph will talk about the candidates&#39; expertise on </span><span class="si">{</span><span class="n">job_title</span><span class="si">}</span><span class="s2"> should start with this sentence: Technuf provides </span><span class="si">{</span><span class="n">num</span><span class="si">}</span><span class="s2"> highly qualified candidates with strong experience in </span><span class="si">{</span><span class="n">job_title</span><span class="si">}</span><span class="s2">.</span>
+<span class="s2">    The second paragraph will talk about the candidates&#39; capabilities and adeptness at </span><span class="si">{</span><span class="n">job_title</span><span class="si">}</span><span class="s2">.</span>
+<span class="s2">    The third paragraph will talk about the team&#39;s ability to fulfill the requirements of the role effectively. </span>
+<span class="s2">    &quot;&quot;&quot;</span>
+    <span class="n">prompt</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot; </span>
+<span class="s2">    &quot;&quot;</span><span class="si">{</span><span class="n">job_description</span><span class="si">}</span><span class="s2">&quot;&quot;</span>
+<span class="s2">    &quot;&quot;</span><span class="si">{</span><span class="n">data</span><span class="si">}</span><span class="s2">&quot;&quot;</span>
+<span class="s2">    &quot;&quot;&quot;</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">chat</span><span class="o">.</span><span class="n">completions</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+        <span class="n">model</span><span class="o">=</span><span class="n">ai_model</span><span class="p">,</span>
+        <span class="n">messages</span><span class="o">=</span><span class="p">[</span>
+            <span class="p">{</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;system&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="n">instruction</span><span class="p">},</span>
+            <span class="p">{</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="n">prompt</span><span class="p">}</span>
+        <span class="p">]</span>
+    <span class="p">)</span>
+    <span class="n">total_tokens</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">usage</span><span class="o">.</span><span class="n">total_tokens</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">total_tokens</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">response</span><span class="o">.</span><span class="n">choices</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">message</span><span class="o">.</span><span class="n">content</span></div>
+
+
+<div class="viewcode-block" id="get_title_page_info">
+<a class="viewcode-back" href="../technufbot.html#technufbot.get_title_page_info">[docs]</a>
+<span class="k">def</span> <span class="nf">get_title_page_info</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot; Extracts all necessary information from the text string and stores it in a dict </span>
+<span class="sd">    </span>
+<span class="sd">    :param text: String text from a file</span>
+<span class="sd">    :type text: string</span>
+<span class="sd">    :return: Returns the title page information stored in a dict</span>
+<span class="sd">    :rtype: dict</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">title_info</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">topr_num_index</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;TOPR Number:&quot;</span><span class="p">)</span>
+    <span class="n">dept_index</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;Using Department:&quot;</span><span class="p">)</span>
+    <span class="n">tom_arr</span> <span class="o">=</span> <span class="n">text</span><span class="p">[</span><span class="n">text</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;Tech Contact:&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="mi">13</span><span class="p">:</span><span class="n">text</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;TOPR Release&quot;</span><span class="p">)]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">tom_arr</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">filter</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">tom_arr</span><span class="p">))</span>
+    <span class="k">while</span> <span class="s1">&#39; &#39;</span> <span class="ow">in</span> <span class="n">tom_arr</span><span class="p">:</span>
+        <span class="n">tom_arr</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)</span>
+        
+    <span class="n">topr_title_arr</span> <span class="o">=</span> <span class="n">text</span><span class="p">[</span><span class="n">text</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;Order Title:&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="mi">13</span> <span class="p">:</span> <span class="n">dept_index</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">topr_title_arr</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">filter</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">topr_title_arr</span><span class="p">))</span>
+    <span class="k">while</span> <span class="s1">&#39; &#39;</span> <span class="ow">in</span> <span class="n">topr_title_arr</span><span class="p">:</span>
+        <span class="n">topr_title_arr</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)</span>
+        
+    <span class="n">title_info</span><span class="p">[</span><span class="s1">&#39;topr_num&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">text</span><span class="p">[</span><span class="n">topr_num_index</span> <span class="o">+</span> <span class="mi">13</span> <span class="p">:</span> <span class="n">dept_index</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">title_info</span><span class="p">[</span><span class="s1">&#39;dept&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">text</span><span class="p">[</span><span class="n">dept_index</span> <span class="o">+</span> <span class="mi">18</span> <span class="p">:</span> <span class="n">text</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;Reference Contract:&quot;</span><span class="p">)]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="n">title_info</span><span class="p">[</span><span class="s1">&#39;due_date&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">text</span><span class="p">[</span><span class="n">text</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;Closing Date/Time:&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="mi">18</span> <span class="p">:</span> <span class="n">text</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;Approximate&quot;</span><span class="p">)]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="n">title_info</span><span class="p">[</span><span class="s1">&#39;submit_to_name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tom_arr</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="n">title_info</span><span class="p">[</span><span class="s1">&#39;submit_to_email&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tom_arr</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">if</span> <span class="s1">&#39;@&#39;</span> <span class="ow">in</span> <span class="n">tom_arr</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">else</span> <span class="n">tom_arr</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="n">title_info</span><span class="p">[</span><span class="s1">&#39;cat_type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;LCATS-3&quot;</span> <span class="k">if</span> <span class="s2">&quot;LCATS&quot;</span> <span class="ow">in</span> <span class="n">text</span><span class="p">[:</span><span class="mi">30</span><span class="p">]</span> <span class="k">else</span> <span class="s2">&quot;MCCATS-3&quot;</span>
+    <span class="n">title_info</span><span class="p">[</span><span class="s1">&#39;topr_title&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;LSBRP Consulting and Technical Services 3</span><span class="se">\n</span><span class="s2">(LCATS-3)&quot;</span> <span class="k">if</span> <span class="s2">&quot;LCATS&quot;</span> <span class="ow">in</span> <span class="n">text</span><span class="p">[:</span><span class="mi">30</span><span class="p">]</span> <span class="k">else</span> <span class="s2">&quot;Montgomery County Consulting and Technical Services 3</span><span class="se">\n</span><span class="s2">(MCCATS-3)&quot;</span>
+    <span class="n">title_info</span><span class="p">[</span><span class="s1">&#39;job_title&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">topr_title_arr</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">topr_title_arr</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">topr_title_arr</span><span class="p">)):</span>
+            <span class="n">title_info</span><span class="p">[</span><span class="s1">&#39;job_title&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="s2">&quot; -- &quot;</span> <span class="o">+</span> <span class="n">topr_title_arr</span><span class="p">[</span><span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">title_info</span></div>
+
+
+<div class="viewcode-block" id="format_resume">
+<a class="viewcode-back" href="../technufbot.html#technufbot.format_resume">[docs]</a>
+<span class="k">def</span> <span class="nf">format_resume</span><span class="p">(</span><span class="n">resume</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot; Takes a resume string and reformats that resume to the format that Technuf uses </span>
+<span class="sd">    </span>
+<span class="sd">    :param resume: String text from a resume file</span>
+<span class="sd">    :type resume: string</span>
+<span class="sd">    :return: OpenAI generated response formatting the resume</span>
+<span class="sd">    :rtype: string</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">instruction</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot; </span>
+<span class="s2">    You are a resume formatter at Technuf LLC that needs to take a given resume delimited by double quotes and return it in the proper formatting shown below in brackets. Do not include the brackets in the actual response. Each section will be separated with two newlines so that there are 5 sections total: name, qualifications, education, skills, work experience, do not change this. You will only reply in the following format, do not include any unecessary greetings or introductions: </span>
+<span class="s2">    [Name of person on resume]</span>
+<span class="s2">    </span><span class="se">\n\n</span>
+<span class="s2">    [Give a summary of all of the resume&#39;s qualifications, knowledge, and experience in at least 15 bullet points:  • ]</span>
+<span class="s2">    </span><span class="se">\n\n</span>
+<span class="s2">    [Copy all of the resume&#39;s education, make sure to include all education information. If there is more than one education, include it on a new line with a bullet point]</span>
+<span class="s2">    </span><span class="se">\n\n</span>
+<span class="s2">    [Give a comma delimited list of all of the resume&#39;s skills]</span>
+<span class="s2">    </span><span class="se">\n\n</span>
+<span class="s2">    [Give a comprehensive and complete list of all of the resume&#39;s work experiences in this formatted example. Use this format to write out all of the resume&#39;s work experiences: Fannie Mae </span><span class="se">\t</span><span class="s2"> Jul 2016 - Dec 2019 </span><span class="se">\n</span><span class="s2"> Senior Agile Consultant / Project Management </span><span class="se">\n</span><span class="s2"> • Supported 3 Fannie Mae Single Family Portfolio teams with a corporate functions portfolio, 7 Enterprise Risk Management teams with Enterprise Finance Modeling, 1 CCFA team, 1 Governance, Risk, and Compliance team, and 3 Loan Quality Connect System / Loan Review Integration System teams at various Agile Maturity levels. </span><span class="se">\n</span><span class="s2"> • Supported 3 Fannie Mae Single Family Portfolio teams with a corporate functions portfolio, 7 Enterprise Risk Management teams with Enterprise Finance Modeling, 1 CCFA team, 1 Governance, Risk, and Compliance team, and 3 Loan Quality Connect System / Loan Review Integration System teams at various Agile Maturity levels.]</span>
+<span class="s2">    &quot;&quot;&quot;</span>
+    <span class="n">prompt</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">    &quot;&quot;</span><span class="si">{</span><span class="n">resume</span><span class="si">}</span><span class="s2">&quot;&quot;</span>
+<span class="s2">    &quot;&quot;&quot;</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">chat</span><span class="o">.</span><span class="n">completions</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+        <span class="n">model</span><span class="o">=</span><span class="n">ai_model</span><span class="p">,</span>
+        <span class="n">messages</span><span class="o">=</span><span class="p">[</span>
+            <span class="p">{</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;system&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="n">instruction</span><span class="p">},</span>
+            <span class="p">{</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="n">prompt</span><span class="p">}</span>
+        <span class="p">]</span>
+    <span class="p">)</span>
+    <span class="n">total_tokens</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">usage</span><span class="o">.</span><span class="n">total_tokens</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">total_tokens</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">response</span><span class="o">.</span><span class="n">choices</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">message</span><span class="o">.</span><span class="n">content</span></div>
+
+
+<div class="viewcode-block" id="generate_interview_questions">
+<a class="viewcode-back" href="../technufbot.html#technufbot.generate_interview_questions">[docs]</a>
+<span class="k">def</span> <span class="nf">generate_interview_questions</span><span class="p">(</span><span class="n">job_description</span><span class="p">,</span> <span class="n">resume</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot; Generates interview questions and answers given a job_description string and a resume string </span>
+<span class="sd">    </span>
+<span class="sd">    :param job_description: The generated job description</span>
+<span class="sd">    :type job_description: string</span>
+<span class="sd">    :param resume: String text from a resume file</span>
+<span class="sd">    :type resume: string</span>
+<span class="sd">    :return: OpenAI generated interview questions</span>
+<span class="sd">    :rtype: string</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">skills_index</span> <span class="o">=</span> <span class="n">job_description</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">&quot;Responsibilities:&quot;</span><span class="p">)</span>
+    <span class="n">end_index</span> <span class="o">=</span> <span class="n">job_description</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">&quot;Education&quot;</span><span class="p">)</span>
+    <span class="n">job_description</span> <span class="o">=</span> <span class="n">job_description</span><span class="p">[</span><span class="n">skills_index</span><span class="p">:</span><span class="n">end_index</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+
+    <span class="n">prompt</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot; </span>
+<span class="s2">    What is the name on this given resume? </span><span class="si">{</span><span class="n">resume</span><span class="si">}</span>
+<span class="s2">    &quot;&quot;&quot;</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">chat</span><span class="o">.</span><span class="n">completions</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+        <span class="n">model</span><span class="o">=</span><span class="n">ai_model</span><span class="p">,</span>
+        <span class="n">messages</span><span class="o">=</span><span class="p">[</span>
+            <span class="p">{</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;system&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="s2">&quot;You will only answer the question asked with only the answer. Do not include any filler words or greetings&quot;</span><span class="p">},</span>
+            <span class="p">{</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="n">prompt</span><span class="p">}</span>
+        <span class="p">]</span>
+    <span class="p">)</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">choices</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">message</span><span class="o">.</span><span class="n">content</span>
+    
+    <span class="n">instruction</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">    You are an interviewer at Technuf LLC and an SME on this specific job that needs to curate interview questions to ask a candidate based on their resume and a given job description.</span>
+<span class="s2">    According to this job description:</span>
+<span class="s2">    </span><span class="si">{</span><span class="n">job_description</span><span class="si">}</span><span class="s2">. </span>
+<span class="s2">    &quot;&quot;&quot;</span>
+    <span class="n">prompt</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot; </span>
+<span class="s2">    Generate 10 interview questions and answers about the requirements section of the job description and 5 questions and answers tailored for this resume in bullet point format: </span>
+<span class="s2">    </span><span class="si">{</span><span class="n">resume</span><span class="si">}</span>
+<span class="s2">    &quot;&quot;&quot;</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">chat</span><span class="o">.</span><span class="n">completions</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+        <span class="n">model</span><span class="o">=</span><span class="n">ai_model</span><span class="p">,</span>
+        <span class="n">messages</span><span class="o">=</span><span class="p">[</span>
+            <span class="p">{</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;system&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="n">instruction</span><span class="p">},</span>
+            <span class="p">{</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="n">prompt</span><span class="p">}</span>
+        <span class="p">]</span>
+    <span class="p">)</span>
+    <span class="n">total_tokens</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">usage</span><span class="o">.</span><span class="n">total_tokens</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">total_tokens</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">choices</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">message</span><span class="o">.</span><span class="n">content</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span></div>
+
+
+<span class="c1"># TODO: Also add LinkedIn job posting here</span>
+<div class="viewcode-block" id="generate_job_description">
+<a class="viewcode-back" href="../technufbot.html#technufbot.generate_job_description">[docs]</a>
+<span class="k">def</span> <span class="nf">generate_job_description</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot; Generates a job description string in the Technuf format given a text string </span>
+<span class="sd">    </span>
+<span class="sd">    :param text: String text from a file</span>
+<span class="sd">    :type text: string</span>
+<span class="sd">    :return: Returns the OpenAI generated job description</span>
+<span class="sd">    :rtype: string</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">instruction</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">    You are a recruiter working at Technuf LLC. Only answer with the template given. Ensure to exclude any mention of Evaluation Criteria, How to Apply, Note, Contractor, Contract Staff, and Interview Criteria.</span>
+<span class="s2">    You are tasked with generating a job posting following the format given, using information based on the solicitation requirements given. Reply in the following format, making sure that each bullet point should be on a new line, and every section should be separated with a new line, and each colon should have a new line after it: </span>
+<span class="s2">    Who we are [Do not change this header]:</span>
+<span class="s2">    Technuf, LLC is a Maryland based SBA certified 8(a) small business company providing leading-edge and proven technologies, industry vertical domain expertise and highly skilled and motivated professionals to achieve our customers&#39; mission critical business needs.</span>
+<span class="s2">   </span>
+<span class="s2">    What we&#39;re looking for [Do not change this header]:</span><span class="se">\n</span>
+<span class="s2">    [Insert a one paragraph description of the name of the job that Technuf is looking for and what the job entails (make sure to start the paragraph with: Technuf is looking for...)]</span>
+<span class="s2">    </span><span class="se">\n\n</span>
+<span class="s2">    Responsibilities [Do not change this header]:</span><span class="se">\n</span>
+<span class="s2">    [This section should copy everything from the Scope of Work section, but no not include anything that has the words &quot;Contractor&quot;. Separate each bullet point with a new line]</span>
+<span class="s2">    </span><span class="se">\n\n</span>
+<span class="s2">    Skills and Experience [Do not change this header]:</span><span class="se">\n</span>
+<span class="s2">    [This section should copy everything from the Skills/Experience section. Separate bullet points with a new line]</span>
+<span class="s2">    </span><span class="se">\n\n</span>
+<span class="s2">    Good to Have [Do not change this header]:</span><span class="se">\n</span>
+<span class="s2">    [This section should copy everything from the Additionally, to be successful section. If there is no Additionally, to be successful section, then do not include the Good to Have section. Separate bullet points with a new line.]</span>
+<span class="s2">    </span><span class="se">\n\n</span>
+<span class="s2">    Education [Do not change this header]:</span><span class="se">\n</span>
+<span class="s2">    Required: [insert required level of education here based on the job]</span><span class="se">\n</span>
+<span class="s2">    Preferred: [insert preferred level of education here based on the job]</span><span class="se">\n</span>
+<span class="s2">    &quot;&quot;&quot;</span>
+    
+    <span class="n">prompt</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot; </span>
+<span class="s2">    Use the information from the solicitations below to fill in the relevant sections:</span>
+<span class="s2">    </span><span class="si">{</span><span class="n">text</span><span class="si">}</span>
+<span class="s2">    &quot;&quot;&quot;</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">chat</span><span class="o">.</span><span class="n">completions</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+        <span class="n">model</span><span class="o">=</span><span class="n">ai_model</span><span class="p">,</span>
+        <span class="n">messages</span><span class="o">=</span><span class="p">[</span>
+            <span class="p">{</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;system&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="n">instruction</span><span class="p">},</span>
+            <span class="p">{</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="n">prompt</span><span class="p">}</span>
+        <span class="p">]</span>
+    <span class="p">)</span>
+    <span class="n">total_tokens</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">usage</span><span class="o">.</span><span class="n">total_tokens</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">total_tokens</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">response</span><span class="o">.</span><span class="n">choices</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">message</span><span class="o">.</span><span class="n">content</span></div>
+
+
+<div class="viewcode-block" id="fill_document">
+<a class="viewcode-back" href="../technufbot.html#technufbot.fill_document">[docs]</a>
+<span class="k">def</span> <span class="nf">fill_document</span><span class="p">(</span><span class="n">template_path</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot; Fills a word document template with the data dict given a template_path, and lets you download the docx file </span>
+<span class="sd">    </span>
+<span class="sd">    :param template_path: path of template file</span>
+<span class="sd">    :type template_path: string</span>
+<span class="sd">    :param data: dict of data to replace in the template</span>
+<span class="sd">    :type data: dict</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">doc</span> <span class="o">=</span> <span class="n">DocxTemplate</span><span class="p">(</span><span class="n">template_path</span><span class="p">)</span>
+    <span class="c1"># This code prevents XML errors since docxtpl can&#39;t read in &#39;&amp;&#39; symbols</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+        <span class="n">data</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;&amp;&quot;</span><span class="p">,</span> <span class="s2">&quot;and&quot;</span><span class="p">)</span>
+        
+    <span class="n">doc</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+    
+
+    <span class="c1"># Makes the docx file downloadable</span>
+    <span class="n">bio</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">()</span>
+    <span class="n">doc</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">bio</span><span class="p">)</span>
+    
+    <span class="k">if</span> <span class="n">doc</span><span class="p">:</span>
+        <span class="n">st</span><span class="o">.</span><span class="n">download_button</span><span class="p">(</span>
+            <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Click here to download&quot;</span><span class="p">,</span>
+            <span class="n">data</span><span class="o">=</span><span class="n">bio</span><span class="o">.</span><span class="n">getvalue</span><span class="p">(),</span>
+            <span class="n">file_name</span><span class="o">=</span><span class="s2">&quot;proposal.docx&quot;</span><span class="p">,</span>
+            <span class="n">mime</span><span class="o">=</span><span class="s2">&quot;docx&quot;</span>
+        <span class="p">)</span>
+    
+    <span class="c1"># My attempt at allowing users to view the pdf file without having to download it. The problem with this is that </span>
+    <span class="c1"># it doesn&#39;t keep the pdf format</span>
+    <span class="n">bio</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">mammoth</span><span class="o">.</span><span class="n">convert_to_html</span><span class="p">(</span><span class="n">bio</span><span class="p">)</span>
+    <span class="n">pdf</span> <span class="o">=</span> <span class="n">pdfkit</span><span class="o">.</span><span class="n">from_string</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+    <span class="n">pdf_viewer</span><span class="p">(</span><span class="n">pdf</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">700</span><span class="p">)</span></div>
+
+    
+<div class="viewcode-block" id="download_interview_questions">
+<a class="viewcode-back" href="../technufbot.html#technufbot.download_interview_questions">[docs]</a>
+<span class="k">def</span> <span class="nf">download_interview_questions</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot; Option to download interview questions generated given a text string </span>
+<span class="sd">    </span>
+<span class="sd">    :param text: interview questions that were generated</span>
+<span class="sd">    :type text: string</span>
+<span class="sd">    :param name: name of candidate</span>
+<span class="sd">    :type name: string</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">doc</span> <span class="o">=</span> <span class="n">Document</span><span class="p">()</span>
+    <span class="n">doc</span><span class="o">.</span><span class="n">add_paragraph</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+    <span class="n">bio</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">()</span>
+    <span class="n">doc</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">bio</span><span class="p">)</span>
+    
+    <span class="k">if</span> <span class="n">doc</span><span class="p">:</span>
+        <span class="n">st</span><span class="o">.</span><span class="n">download_button</span><span class="p">(</span>
+            <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Click here to download&quot;</span><span class="p">,</span>
+            <span class="n">data</span><span class="o">=</span><span class="n">bio</span><span class="o">.</span><span class="n">getvalue</span><span class="p">(),</span>
+            <span class="n">file_name</span><span class="o">=</span> <span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;&#39;s Interview Q and A.docx&quot;</span><span class="p">,</span>
+            <span class="n">mime</span><span class="o">=</span><span class="s2">&quot;docx&quot;</span>
+        <span class="p">)</span></div>
+
+        
+
+<div class="viewcode-block" id="generate_proposal">
+<a class="viewcode-back" href="../technufbot.html#technufbot.generate_proposal">[docs]</a>
+<span class="k">def</span> <span class="nf">generate_proposal</span><span class="p">(</span><span class="n">resumes</span><span class="p">,</span> <span class="n">concise_job_description</span><span class="p">,</span> <span class="n">job_title</span><span class="p">):</span> 
+<span class="w">    </span><span class="sd">&quot;&quot;&quot; Generates the proposal given up to 3 resume strings, a concise_job_description string, and a job_title string</span>
+<span class="sd">    This returns a data dict with all of the necessary information </span>
+<span class="sd">    </span>
+<span class="sd">    :param resumes: list of resumes</span>
+<span class="sd">    :type resumes: list</span>
+<span class="sd">    :param concise_job_description: a concise version of the job description with uncessary info removed</span>
+<span class="sd">    :type concise_job_description: string</span>
+<span class="sd">    :param job_title: job title extracted from the file</span>
+<span class="sd">    :type job_title: string</span>
+<span class="sd">    :return: dict with all the data needed to generate the proposal</span>
+<span class="sd">    :rtype: dict</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">concise_data</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">resume_count</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">resume</span> <span class="ow">in</span> <span class="n">resumes</span><span class="p">:</span>
+        <span class="n">formatted_resume</span> <span class="o">=</span> <span class="n">format_resume</span><span class="p">(</span><span class="n">resume</span><span class="p">)</span>
+        <span class="n">resume_list</span> <span class="o">=</span> <span class="n">formatted_resume</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n\n\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">resume_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">filter</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">resume_list</span><span class="p">))</span>
+        <span class="k">while</span> <span class="s1">&#39; &#39;</span> <span class="ow">in</span> <span class="n">resume_list</span><span class="p">:</span>
+            <span class="n">resume_list</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">resume_count</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s1">&#39;resume_name_1&#39;</span> <span class="p">:</span> <span class="n">resume_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">lstrip</span><span class="p">()</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(),</span> 
+                <span class="s1">&#39;resume_qualifications_1&#39;</span> <span class="p">:</span> <span class="n">resume_list</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">lstrip</span><span class="p">()</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(),</span> 
+                <span class="s1">&#39;resume_education_1&#39;</span> <span class="p">:</span> <span class="n">resume_list</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">lstrip</span><span class="p">()</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(),</span> 
+                <span class="s1">&#39;resume_skills_1&#39;</span> <span class="p">:</span> <span class="n">resume_list</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">lstrip</span><span class="p">()</span><span class="o">.</span><span class="n">rstrip</span><span class="p">()</span>
+            <span class="p">}</span>
+            <span class="n">work_str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+            <span class="k">for</span> <span class="n">work</span> <span class="ow">in</span> <span class="n">resume_list</span><span class="p">[</span><span class="mi">4</span><span class="p">:]:</span>
+                <span class="n">work_str</span> <span class="o">+=</span> <span class="n">work</span><span class="o">.</span><span class="n">lstrip</span><span class="p">()</span><span class="o">.</span><span class="n">rstrip</span><span class="p">()</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="n">data</span><span class="p">[</span><span class="s1">&#39;resume_work_1&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">work_str</span>
+                
+            <span class="n">concise_data</span> <span class="o">+=</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;resume_name_1&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;: &quot;</span> <span class="o">+</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;resume_qualifications_1&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;resume_skills_1&quot;</span><span class="p">]</span>
+            <span class="n">data</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s1">&#39;resume_description_1&#39;</span> <span class="p">:</span> <span class="n">generate_resume_descriptions</span><span class="p">(</span><span class="n">resume</span><span class="p">,</span> <span class="n">concise_job_description</span><span class="p">)})</span>
+        <span class="k">elif</span> <span class="n">resume_count</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">data</span><span class="o">.</span><span class="n">update</span><span class="p">({</span>
+                <span class="s1">&#39;resume_name_2&#39;</span> <span class="p">:</span> <span class="n">resume_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">lstrip</span><span class="p">()</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(),</span> 
+                <span class="s1">&#39;resume_qualifications_2&#39;</span> <span class="p">:</span> <span class="n">resume_list</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">lstrip</span><span class="p">()</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(),</span> 
+                <span class="s1">&#39;resume_education_2&#39;</span> <span class="p">:</span> <span class="n">resume_list</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">lstrip</span><span class="p">()</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(),</span> 
+                <span class="s1">&#39;resume_skills_2&#39;</span> <span class="p">:</span> <span class="n">resume_list</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">lstrip</span><span class="p">()</span><span class="o">.</span><span class="n">rstrip</span><span class="p">()</span>
+            <span class="p">})</span>
+            <span class="n">work_str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+            <span class="k">for</span> <span class="n">work</span> <span class="ow">in</span> <span class="n">resume_list</span><span class="p">[</span><span class="mi">4</span><span class="p">:]:</span>
+                <span class="n">work_str</span> <span class="o">+=</span> <span class="n">work</span><span class="o">.</span><span class="n">lstrip</span><span class="p">()</span><span class="o">.</span><span class="n">rstrip</span><span class="p">()</span>
+            <span class="n">data</span><span class="p">[</span><span class="s1">&#39;resume_work_2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">work_str</span>
+            <span class="n">concise_data</span> <span class="o">+=</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;resume_name_2&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;: &quot;</span> <span class="o">+</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;resume_qualifications_2&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;resume_skills_2&quot;</span><span class="p">]</span>
+            <span class="n">data</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s1">&#39;resume_description_2&#39;</span> <span class="p">:</span> <span class="n">generate_resume_descriptions</span><span class="p">(</span><span class="n">resume</span><span class="p">,</span> <span class="n">concise_job_description</span><span class="p">)})</span>
+        <span class="k">elif</span> <span class="n">resume_count</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">data</span><span class="o">.</span><span class="n">update</span><span class="p">({</span>
+                <span class="s1">&#39;resume_name_3&#39;</span> <span class="p">:</span> <span class="n">resume_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">lstrip</span><span class="p">()</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(),</span> 
+                <span class="s1">&#39;resume_qualifications_3&#39;</span> <span class="p">:</span> <span class="n">resume_list</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">lstrip</span><span class="p">()</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(),</span> 
+                <span class="s1">&#39;resume_education_3&#39;</span> <span class="p">:</span> <span class="n">resume_list</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">lstrip</span><span class="p">()</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(),</span> 
+                <span class="s1">&#39;resume_skills_3&#39;</span> <span class="p">:</span> <span class="n">resume_list</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">lstrip</span><span class="p">()</span><span class="o">.</span><span class="n">rstrip</span><span class="p">()</span>
+            <span class="p">})</span>
+            <span class="n">work_str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+            <span class="k">for</span> <span class="n">work</span> <span class="ow">in</span> <span class="n">resume_list</span><span class="p">[</span><span class="mi">4</span><span class="p">:]:</span>
+                <span class="n">work_str</span> <span class="o">+=</span> <span class="n">work</span><span class="o">.</span><span class="n">lstrip</span><span class="p">()</span><span class="o">.</span><span class="n">rstrip</span><span class="p">()</span>
+            <span class="n">data</span><span class="p">[</span><span class="s1">&#39;resume_work_2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">work_str</span>
+            <span class="n">concise_data</span> <span class="o">+=</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;resume_name_3&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;: &quot;</span> <span class="o">+</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;resume_qualifications_3&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;resume_skills_3&quot;</span><span class="p">]</span>
+            <span class="n">data</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s1">&#39;resume_description_3&#39;</span> <span class="p">:</span> <span class="n">generate_resume_descriptions</span><span class="p">(</span><span class="n">resume</span><span class="p">,</span> <span class="n">concise_job_description</span><span class="p">)})</span>
+        <span class="n">resume_count</span> <span class="o">+=</span> <span class="mi">1</span>
+                        
+    <span class="n">data</span><span class="o">.</span><span class="n">update</span><span class="p">({</span>
+        <span class="s1">&#39;sos_understanding&#39;</span> <span class="p">:</span> <span class="n">generate_sos</span><span class="p">(</span><span class="n">concise_job_description</span><span class="p">,</span> <span class="n">concise_data</span><span class="p">,</span> <span class="n">resume_count</span><span class="p">,</span> <span class="n">job_title</span><span class="p">)</span>
+    <span class="p">})</span>
+    <span class="k">return</span> <span class="n">data</span></div>
+
+
+<div class="viewcode-block" id="main">
+<a class="viewcode-back" href="../technufbot.html#technufbot.main">[docs]</a>
+<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot; Main function that has a login page and all of the streamlit elements &quot;&quot;&quot;</span>
+    <span class="n">pswd</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">&#39;password&#39;</span><span class="p">)</span>
+    <span class="n">hashed_passwords</span> <span class="o">=</span> <span class="n">Hasher</span><span class="p">([</span><span class="n">pswd</span><span class="p">])</span><span class="o">.</span><span class="n">generate</span><span class="p">()</span>
+    <span class="n">credentials</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;credentials&quot;</span><span class="p">:</span> <span class="p">{</span>
+      <span class="s1">&#39;usernames&#39;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;proposals&quot;</span><span class="p">:</span> <span class="p">{</span>
+          <span class="s2">&quot;email&quot;</span><span class="p">:</span> <span class="s2">&quot;proposals@technuf.com&quot;</span><span class="p">,</span>
+          <span class="s2">&quot;failed_login_attempts&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+          <span class="s2">&quot;logged_in&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+          <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;BD Proposal Team&quot;</span><span class="p">,</span>
+          <span class="s2">&quot;password&quot;</span><span class="p">:</span> <span class="n">hashed_passwords</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;bdproposals&quot;</span><span class="p">:</span> <span class="p">{</span>
+          <span class="s2">&quot;email&quot;</span><span class="p">:</span> <span class="s2">&quot;bdproposals@technuf.com&quot;</span><span class="p">,</span>
+          <span class="s2">&quot;failed_login_attempts&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+          <span class="s2">&quot;logged_in&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+          <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;BD Proposal Team&quot;</span><span class="p">,</span>
+          <span class="s2">&quot;password&quot;</span><span class="p">:</span> <span class="n">hashed_passwords</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="p">}</span>
+      <span class="p">}</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;cookie&quot;</span><span class="p">:</span> <span class="p">{</span>
+      <span class="s2">&quot;expiry_days&quot;</span><span class="p">:</span> <span class="mi">30</span><span class="p">,</span>
+      <span class="s2">&quot;key&quot;</span><span class="p">:</span> <span class="s2">&quot;some_signature_key&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;some_cookie_name&quot;</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;pre-authorized&quot;</span><span class="p">:</span> <span class="p">{</span>
+      <span class="s2">&quot;emails&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="s2">&quot;proposals@technuf.com&quot;</span>
+      <span class="p">]</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+    
+    <span class="n">authenticator</span> <span class="o">=</span> <span class="n">stauth</span><span class="o">.</span><span class="n">Authenticate</span><span class="p">(</span><span class="n">credentials</span><span class="p">[</span><span class="s1">&#39;credentials&#39;</span><span class="p">],</span><span class="s1">&#39;some_cookie_name&#39;</span><span class="p">,</span><span class="s1">&#39;some_signature_key&#39;</span><span class="p">,</span><span class="n">cookie_expiry_days</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span><span class="n">pre_authorized</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;proposals@technuf.com&quot;</span><span class="p">])</span>
+    <span class="n">authenticator</span><span class="o">.</span><span class="n">login</span><span class="p">()</span>
+    
+    <span class="k">if</span> <span class="n">st</span><span class="o">.</span><span class="n">session_state</span><span class="p">[</span><span class="s1">&#39;authentication_status&#39;</span><span class="p">]:</span>
+        <span class="n">col1</span><span class="p">,</span> <span class="n">col2</span><span class="p">,</span> <span class="n">col3</span> <span class="o">=</span> <span class="n">st</span><span class="o">.</span><span class="n">columns</span><span class="p">([</span><span class="mi">26</span><span class="p">,</span><span class="mi">26</span><span class="p">,</span><span class="mi">8</span><span class="p">])</span>
+        <span class="k">with</span> <span class="n">col3</span><span class="p">:</span>
+            <span class="n">authenticator</span><span class="o">.</span><span class="n">logout</span><span class="p">()</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="c1"># Add Technuf Logo and Technufbot text</span>
+        <span class="n">title_col1</span><span class="p">,</span> <span class="n">mid</span><span class="p">,</span> <span class="n">title_col2</span> <span class="o">=</span> <span class="n">st</span><span class="o">.</span><span class="n">columns</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">20</span><span class="p">])</span>
+        <span class="k">with</span> <span class="n">title_col1</span><span class="p">:</span>
+            <span class="n">st</span><span class="o">.</span><span class="n">image</span><span class="p">(</span><span class="s1">&#39;technuf_logo.png&#39;</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">title_col2</span><span class="p">:</span>
+            <span class="n">st</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Technuf Proposal Bot&quot;</span><span class="p">)</span>
+        <span class="n">st</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;This proposal bot automates the initial process of breaking down the solicitation file that the proposal team receives, speeding up the entire process. The bot automatically extracts the scope of work, and other sections that are necessary to create a job description. The first button takes that scope of work and creates a job description based on that. The second button generates up to 10 interview questions for any one candidate. The third button generates an entire proposal response given a response template and the resumes of the candidates.&quot;</span><span class="p">)</span>
+        <span class="c1"># Button session states</span>
+        <span class="k">if</span> <span class="s2">&quot;last_pressed_button&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">st</span><span class="o">.</span><span class="n">session_state</span><span class="p">:</span>
+            <span class="n">st</span><span class="o">.</span><span class="n">session_state</span><span class="o">.</span><span class="n">last_pressed_button</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="s1">&#39;clicked&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">st</span><span class="o">.</span><span class="n">session_state</span><span class="p">:</span>
+            <span class="n">st</span><span class="o">.</span><span class="n">session_state</span><span class="o">.</span><span class="n">clicked</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="s1">&#39;disabled&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">st</span><span class="o">.</span><span class="n">session_state</span><span class="p">:</span>
+            <span class="n">st</span><span class="o">.</span><span class="n">session_state</span><span class="o">.</span><span class="n">disabled</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="n">st</span><span class="o">.</span><span class="n">session_state</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;enable_buttons&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+            <span class="n">st</span><span class="o">.</span><span class="n">session_state</span><span class="o">.</span><span class="n">disabled</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">job_description</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="n">job_title</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="n">pdf_text</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="n">concise_job_description</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="n">st</span><span class="o">.</span><span class="n">subheader</span><span class="p">(</span><span class="s2">&quot;Choose a solicitation PDF or docx file&quot;</span><span class="p">)</span>
+        <span class="n">solicitation_file</span> <span class="o">=</span> <span class="n">st</span><span class="o">.</span><span class="n">file_uploader</span><span class="p">(</span><span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;.pdf&quot;</span><span class="p">,</span> <span class="s2">&quot;.docx&quot;</span><span class="p">],</span> <span class="n">label_visibility</span><span class="o">=</span><span class="s2">&quot;collapsed&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">solicitation_file</span><span class="p">:</span>
+            <span class="n">button_col1</span><span class="p">,</span> <span class="n">button_col2</span><span class="p">,</span> <span class="n">button_col3</span> <span class="o">=</span> <span class="n">st</span><span class="o">.</span><span class="n">columns</span><span class="p">([</span><span class="mi">18</span><span class="p">,</span><span class="mi">20</span><span class="p">,</span><span class="mi">20</span><span class="p">])</span>
+            <span class="k">with</span> <span class="n">button_col1</span><span class="p">:</span>
+                <span class="n">job_desc_button</span> <span class="o">=</span> <span class="n">st</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">&quot;Generate Job Description&quot;</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="s1">&#39;enable_buttons&#39;</span><span class="p">)</span>
+            <span class="k">with</span> <span class="n">button_col2</span><span class="p">:</span>
+                <span class="n">interview_question_button</span> <span class="o">=</span> <span class="n">st</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">&quot;Generate Interview Questions&quot;</span><span class="p">)</span>
+            <span class="k">with</span> <span class="n">button_col3</span><span class="p">:</span>
+                <span class="n">resume_upload_btn</span> <span class="o">=</span> <span class="n">st</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">&quot;Generate Proposal&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">job_desc_button</span><span class="p">:</span>
+                <span class="n">st</span><span class="o">.</span><span class="n">session_state</span><span class="o">.</span><span class="n">last_pressed_button</span> <span class="o">=</span> <span class="s2">&quot;job_desc&quot;</span>
+            <span class="k">elif</span> <span class="n">interview_question_button</span><span class="p">:</span>
+                <span class="n">st</span><span class="o">.</span><span class="n">session_state</span><span class="o">.</span><span class="n">last_pressed_button</span> <span class="o">=</span> <span class="s2">&quot;interview&quot;</span>
+            <span class="k">elif</span> <span class="n">resume_upload_btn</span><span class="p">:</span>
+                <span class="n">st</span><span class="o">.</span><span class="n">session_state</span><span class="o">.</span><span class="n">last_pressed_button</span> <span class="o">=</span> <span class="s2">&quot;resume_upload&quot;</span>
+            <span class="c1"># Parses through based on .pdf or .docx file</span>
+            <span class="k">if</span> <span class="n">solicitation_file</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.pdf&#39;</span><span class="p">):</span>
+                <span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">(</span><span class="n">delete</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s2">&quot;.pdf&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">temp_file</span><span class="p">:</span>
+                    <span class="n">temp_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">solicitation_file</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+                    <span class="n">temp_filepath</span> <span class="o">=</span> <span class="n">temp_file</span><span class="o">.</span><span class="n">name</span>
+                <span class="n">pdf_text</span> <span class="o">=</span> <span class="n">extract_text_from_pdf</span><span class="p">(</span><span class="n">temp_filepath</span><span class="p">)</span>
+                <span class="n">job_title</span> <span class="o">=</span> <span class="n">get_job_title_pdf</span><span class="p">(</span><span class="n">pdf_text</span><span class="p">)</span>
+                <span class="n">st</span><span class="o">.</span><span class="n">session_state</span><span class="o">.</span><span class="n">job_title</span> <span class="o">=</span> <span class="n">job_title</span>
+            <span class="k">elif</span> <span class="n">solicitation_file</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.docx&#39;</span><span class="p">):</span>
+                <span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">(</span><span class="n">delete</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s2">&quot;.docx&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">temp_file</span><span class="p">:</span>
+                    <span class="n">temp_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">solicitation_file</span><span class="o">.</span><span class="n">getbuffer</span><span class="p">())</span>
+                    <span class="n">temp_filepath</span> <span class="o">=</span> <span class="n">temp_file</span><span class="o">.</span><span class="n">name</span>
+                <span class="n">pdf_text</span> <span class="o">=</span> <span class="n">extract_text_from_docx</span><span class="p">(</span><span class="n">temp_filepath</span><span class="p">)</span>
+                <span class="n">job_title</span> <span class="o">=</span> <span class="n">get_job_title_docx</span><span class="p">(</span><span class="n">pdf_text</span><span class="p">)</span>
+                <span class="n">st</span><span class="o">.</span><span class="n">session_state</span><span class="o">.</span><span class="n">job_title</span> <span class="o">=</span> <span class="n">job_title</span>
+            <span class="c1"># If scope of work is found, it will extract it and print it while filtering out the words contract staff</span>
+            <span class="n">relevant_sections</span> <span class="o">=</span> <span class="n">extract_relevant_sections</span><span class="p">(</span><span class="n">pdf_text</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">relevant_sections</span><span class="p">:</span>
+                <span class="n">job_description</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+                <span class="n">relevant_lines</span> <span class="o">=</span> <span class="n">relevant_sections</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+                <span class="n">filtered_lines</span> <span class="o">=</span> <span class="p">[</span><span class="n">line</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">relevant_lines</span> <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="s1">&#39;contract staff&#39;</span> <span class="ow">in</span> <span class="n">line</span><span class="o">.</span><span class="n">lower</span><span class="p">())]</span>
+                <span class="n">relevant_sections</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">filtered_lines</span><span class="p">)</span>
+                <span class="n">st</span><span class="o">.</span><span class="n">session_state</span><span class="p">[</span><span class="s1">&#39;display_text&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">relevant_sections</span>
+                <span class="n">st</span><span class="o">.</span><span class="n">session_state</span><span class="p">[</span><span class="s1">&#39;text_area_label&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;Extracted Relevant Sections:&quot;</span>
+                <span class="k">if</span> <span class="n">st</span><span class="o">.</span><span class="n">session_state</span><span class="o">.</span><span class="n">last_pressed_button</span> <span class="o">==</span> <span class="s2">&quot;job_desc&quot;</span><span class="p">:</span>
+                    <span class="n">st</span><span class="o">.</span><span class="n">session_state</span><span class="o">.</span><span class="n">job_button</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="k">with</span> <span class="n">st</span><span class="o">.</span><span class="n">spinner</span><span class="p">(</span><span class="s1">&#39;Generating job posting&#39;</span><span class="p">):</span>
+                        <span class="n">job_posting</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+                        <span class="k">if</span> <span class="s2">&quot;job_posting&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">st</span><span class="o">.</span><span class="n">session_state</span><span class="p">:</span>
+                            <span class="n">job_posting</span> <span class="o">=</span> <span class="n">st</span><span class="o">.</span><span class="n">session_state</span><span class="o">.</span><span class="n">job_title</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">&quot;</span>
+                            <span class="n">job_description</span> <span class="o">=</span> <span class="n">generate_job_description</span><span class="p">(</span><span class="n">relevant_sections</span><span class="p">)</span>
+                            <span class="c1"># Checks to see if there is an extra Note added on the end, and will remove it if there is</span>
+                            <span class="k">if</span> <span class="n">job_description</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;Note:&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+                                <span class="n">job_description</span> <span class="o">=</span> <span class="n">job_description</span><span class="p">[:</span><span class="n">job_description</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;Note:&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+                            <span class="n">job_posting</span> <span class="o">+=</span> <span class="n">job_description</span>
+                            <span class="n">job_posting</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">Benefits:</span><span class="se">\n\n</span><span class="s2">We offer a competitive pay and benefits package that includes generous paid-time-off including holidays, short-and-long-term disability; group health insurance including medical, dental and vision coverage, training and 401(k) retirement plan. </span><span class="se">\n</span><span class="s2">&quot;</span>
+                            <span class="n">job_posting</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Technuf is an Equal Opportunity/Affirmative Action Employer. Members of ethnic minorities, women, special disabled veterans, veterans of the Vietnam-era, recently separated veterans, and other protected veterans, persons of disability and/or persons age 40 and over are encouraged to apply.</span><span class="se">\n</span><span class="s2">&quot;</span>
+                            <span class="n">newline_index</span> <span class="o">=</span> <span class="n">job_posting</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;Preferred&quot;</span><span class="p">)</span>
+                            <span class="k">if</span> <span class="n">newline_index</span><span class="p">:</span>
+                                <span class="n">job_posting</span> <span class="o">=</span> <span class="n">job_posting</span><span class="p">[:</span><span class="n">newline_index</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="n">job_posting</span><span class="p">[</span><span class="n">newline_index</span><span class="p">:]</span>
+                            <span class="n">st</span><span class="o">.</span><span class="n">session_state</span><span class="p">[</span><span class="s1">&#39;job_posting&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">job_posting</span>
+                        <span class="k">else</span><span class="p">:</span> 
+                            <span class="n">job_posting</span> <span class="o">=</span> <span class="n">st</span><span class="o">.</span><span class="n">session_state</span><span class="o">.</span><span class="n">job_posting</span>
+                    
+                    <span class="n">regen_job_desc_button</span> <span class="o">=</span> <span class="n">st</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">&quot;Regenerate Job Description&quot;</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">regen_job_desc_button</span><span class="p">:</span>
+                        <span class="k">with</span> <span class="n">st</span><span class="o">.</span><span class="n">spinner</span><span class="p">(</span><span class="s1">&#39;Regenerating job posting&#39;</span><span class="p">):</span>
+                            <span class="n">job_posting</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+                            <span class="n">job_posting</span> <span class="o">=</span> <span class="n">st</span><span class="o">.</span><span class="n">session_state</span><span class="o">.</span><span class="n">job_title</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">&quot;</span>
+                            <span class="n">job_description</span> <span class="o">=</span> <span class="n">generate_job_description</span><span class="p">(</span><span class="n">relevant_sections</span><span class="p">)</span>
+                            <span class="c1"># Checks to see if there is an extra Note added on the end, and will remove it if there is</span>
+                            <span class="k">if</span> <span class="n">job_description</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;Note:&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+                                <span class="n">job_description</span> <span class="o">=</span> <span class="n">job_description</span><span class="p">[:</span><span class="n">job_description</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;Note:&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+                            <span class="n">job_posting</span> <span class="o">+=</span> <span class="n">job_description</span>
+                            <span class="n">job_posting</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">Benefits:</span><span class="se">\n\n</span><span class="s2">We offer a competitive pay and benefits package that includes generous paid-time-off including holidays, short-and-long-term disability; group health insurance including medical, dental and vision coverage, training and 401(k) retirement plan. </span><span class="se">\n</span><span class="s2">&quot;</span>
+                            <span class="n">job_posting</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Technuf is an Equal Opportunity/Affirmative Action Employer. Members of ethnic minorities, women, special disabled veterans, veterans of the Vietnam-era, recently separated veterans, and other protected veterans, persons of disability and/or persons age 40 and over are encouraged to apply.</span><span class="se">\n</span><span class="s2">&quot;</span>
+                            <span class="n">newline_index</span> <span class="o">=</span> <span class="n">job_posting</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;Preferred&quot;</span><span class="p">)</span>
+                            <span class="k">if</span> <span class="n">newline_index</span><span class="p">:</span>
+                                <span class="n">job_posting</span> <span class="o">=</span> <span class="n">job_posting</span><span class="p">[:</span><span class="n">newline_index</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="n">job_posting</span><span class="p">[</span><span class="n">newline_index</span><span class="p">:]</span>
+                            <span class="n">st</span><span class="o">.</span><span class="n">session_state</span><span class="p">[</span><span class="s1">&#39;job_posting&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">job_posting</span>
+                    <span class="n">st</span><span class="o">.</span><span class="n">session_state</span><span class="p">[</span><span class="s1">&#39;text_area_label&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;Generated Job Description:&quot;</span>
+                    <span class="n">st</span><span class="o">.</span><span class="n">session_state</span><span class="p">[</span><span class="s1">&#39;display_text&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">job_posting</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">st</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;No relevant sections found in the uploaded PDF.&quot;</span><span class="p">)</span>
+            <span class="c1"># Upload resume to generate interview questions</span>
+            
+            <span class="k">if</span> <span class="n">st</span><span class="o">.</span><span class="n">session_state</span><span class="o">.</span><span class="n">last_pressed_button</span> <span class="o">==</span> <span class="s2">&quot;interview&quot;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="s2">&quot;job_posting&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">st</span><span class="o">.</span><span class="n">session_state</span><span class="p">:</span>
+                    <span class="k">with</span> <span class="n">st</span><span class="o">.</span><span class="n">spinner</span><span class="p">(</span><span class="s1">&#39;Currently loading...&#39;</span><span class="p">):</span>
+                        <span class="n">job_posting</span> <span class="o">=</span> <span class="n">st</span><span class="o">.</span><span class="n">session_state</span><span class="o">.</span><span class="n">job_title</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">&quot;</span>
+                        <span class="n">job_posting</span> <span class="o">+=</span> <span class="n">generate_job_description</span><span class="p">(</span><span class="n">pdf_text</span><span class="p">)</span>
+                        <span class="n">job_posting</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">Benefits:</span><span class="se">\n\n</span><span class="s2">We offer a competitive pay and benefits package that includes generous paid-time-off including holidays, short-and-long-term disability; group health insurance including medical, dental and vision coverage, training and 401(k) retirement plan. </span><span class="se">\n</span><span class="s2">&quot;</span>
+                        <span class="n">job_posting</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Technuf is an Equal Opportunity/Affirmative Action Employer. Members of ethnic minorities, women, special disabled veterans, veterans of the Vietnam-era, recently separated veterans, and other protected veterans, persons of disability and/or persons age 40 and over are encouraged to apply.</span><span class="se">\n</span><span class="s2">&quot;</span>
+                        <span class="n">newline_index</span> <span class="o">=</span> <span class="n">job_posting</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;Preferred&quot;</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="n">newline_index</span><span class="p">:</span>
+                            <span class="n">job_posting</span> <span class="o">=</span> <span class="n">job_posting</span><span class="p">[:</span><span class="n">newline_index</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="n">job_posting</span><span class="p">[</span><span class="n">newline_index</span><span class="p">:]</span>
+                        <span class="n">st</span><span class="o">.</span><span class="n">session_state</span><span class="o">.</span><span class="n">job_posting</span> <span class="o">=</span> <span class="n">job_posting</span>
+                <span class="n">st</span><span class="o">.</span><span class="n">subheader</span><span class="p">(</span><span class="s2">&quot;Select the resume to generate 10 interview questions for:&quot;</span><span class="p">)</span>
+                <span class="n">resume_file</span> <span class="o">=</span> <span class="n">st</span><span class="o">.</span><span class="n">file_uploader</span><span class="p">(</span><span class="s2">&quot;Select a resume to generate interview questions&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;.pdf&quot;</span><span class="p">,</span> <span class="s2">&quot;.docx&quot;</span><span class="p">],</span> <span class="n">accept_multiple_files</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">label_visibility</span><span class="o">=</span><span class="s2">&quot;collapsed&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">resume_file</span><span class="p">:</span>
+                    <span class="n">gen_int_button</span> <span class="o">=</span> <span class="n">st</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">&quot;Generate Interview Questions and Answers&quot;</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">gen_int_button</span><span class="p">:</span>
+                        <span class="k">with</span> <span class="n">st</span><span class="o">.</span><span class="n">spinner</span><span class="p">(</span><span class="s1">&#39;Generating Interview Questions and Answers...&#39;</span><span class="p">):</span>
+                            <span class="k">if</span> <span class="n">resume_file</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.docx&#39;</span><span class="p">):</span>
+                                <span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">(</span><span class="n">delete</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s2">&quot;.docx&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">temp_file</span><span class="p">:</span>
+                                    <span class="n">temp_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">resume_file</span><span class="o">.</span><span class="n">getbuffer</span><span class="p">())</span>
+                                    <span class="n">resume_temp_file_path</span> <span class="o">=</span> <span class="n">temp_file</span><span class="o">.</span><span class="n">name</span>
+                                <span class="n">resume</span> <span class="o">=</span> <span class="n">extract_text_from_docx</span><span class="p">(</span><span class="n">resume_temp_file_path</span><span class="p">)</span>
+                            <span class="k">elif</span> <span class="n">resume_file</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.pdf&#39;</span><span class="p">):</span>
+                                <span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">(</span><span class="n">delete</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s2">&quot;.pdf&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">temp_file</span><span class="p">:</span>
+                                    <span class="n">temp_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">resume_file</span><span class="o">.</span><span class="n">getbuffer</span><span class="p">())</span>
+                                    <span class="n">resume_temp_file_path</span> <span class="o">=</span> <span class="n">temp_file</span><span class="o">.</span><span class="n">name</span>
+                                <span class="n">resume</span> <span class="o">=</span> <span class="n">extract_text_from_pdf</span><span class="p">(</span><span class="n">resume_temp_file_path</span><span class="p">)</span>
+                            <span class="p">(</span><span class="n">interview_questions</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span> <span class="o">=</span> <span class="n">generate_interview_questions</span><span class="p">(</span><span class="n">st</span><span class="o">.</span><span class="n">session_state</span><span class="p">[</span><span class="s1">&#39;job_posting&#39;</span><span class="p">],</span> <span class="n">resume</span><span class="p">)</span>
+                            <span class="n">st</span><span class="o">.</span><span class="n">session_state</span><span class="o">.</span><span class="n">display_text</span> <span class="o">=</span> <span class="n">interview_questions</span>
+                            <span class="n">st</span><span class="o">.</span><span class="n">session_state</span><span class="o">.</span><span class="n">text_area_label</span> <span class="o">=</span> <span class="s2">&quot;Interview Questions:&quot;</span>
+                            <span class="n">download_interview_questions</span><span class="p">(</span><span class="n">interview_questions</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+            <span class="c1"># Format resume in the Technuf proposal format and add it into the template</span>
+            <span class="k">elif</span> <span class="n">st</span><span class="o">.</span><span class="n">session_state</span><span class="o">.</span><span class="n">last_pressed_button</span> <span class="o">==</span> <span class="s2">&quot;resume_upload&quot;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="s2">&quot;job_posting&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">st</span><span class="o">.</span><span class="n">session_state</span><span class="p">:</span>
+                    <span class="k">with</span> <span class="n">st</span><span class="o">.</span><span class="n">spinner</span><span class="p">(</span><span class="s1">&#39;Currently loading...&#39;</span><span class="p">):</span>
+                        <span class="n">job_posting</span> <span class="o">=</span> <span class="n">st</span><span class="o">.</span><span class="n">session_state</span><span class="o">.</span><span class="n">job_title</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">&quot;</span>
+                        <span class="n">job_posting</span> <span class="o">+=</span> <span class="n">generate_job_description</span><span class="p">(</span><span class="n">pdf_text</span><span class="p">)</span>
+                        <span class="n">job_posting</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">Benefits:</span><span class="se">\n\n</span><span class="s2">We offer a competitive pay and benefits package that includes generous paid-time-off including holidays, short-and-long-term disability; group health insurance including medical, dental and vision coverage, training and 401(k) retirement plan. </span><span class="se">\n</span><span class="s2">&quot;</span>
+                        <span class="n">job_posting</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Technuf is an Equal Opportunity/Affirmative Action Employer. Members of ethnic minorities, women, special disabled veterans, veterans of the Vietnam-era, recently separated veterans, and other protected veterans, persons of disability and/or persons age 40 and over are encouraged to apply.</span><span class="se">\n</span><span class="s2">&quot;</span>
+                        <span class="n">newline_index</span> <span class="o">=</span> <span class="n">job_posting</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;Preferred&quot;</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="n">newline_index</span><span class="p">:</span>
+                            <span class="n">job_posting</span> <span class="o">=</span> <span class="n">job_posting</span><span class="p">[:</span><span class="n">newline_index</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="n">job_posting</span><span class="p">[</span><span class="n">newline_index</span><span class="p">:]</span>
+                        <span class="n">st</span><span class="o">.</span><span class="n">session_state</span><span class="o">.</span><span class="n">job_posting</span> <span class="o">=</span> <span class="n">job_posting</span>
+                <span class="n">st</span><span class="o">.</span><span class="n">subheader</span><span class="p">(</span><span class="s2">&quot;Select the propsal template that you want to fill out:&quot;</span><span class="p">)</span>
+                <span class="n">template_file</span> <span class="o">=</span> <span class="n">st</span><span class="o">.</span><span class="n">file_uploader</span><span class="p">(</span><span class="s2">&quot;Select the propsal template&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;.docx&quot;</span><span class="p">],</span> <span class="n">accept_multiple_files</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">label_visibility</span><span class="o">=</span><span class="s2">&quot;collapsed&quot;</span><span class="p">)</span>
+                <span class="n">st</span><span class="o">.</span><span class="n">subheader</span><span class="p">(</span><span class="s2">&quot;Select the resumes you are selecting for the proposal:&quot;</span><span class="p">)</span>
+                <span class="n">resume_files</span> <span class="o">=</span> <span class="n">st</span><span class="o">.</span><span class="n">file_uploader</span><span class="p">(</span><span class="s2">&quot;Select the resumes&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;.pdf&quot;</span><span class="p">,</span> <span class="s2">&quot;.docx&quot;</span><span class="p">],</span> <span class="n">accept_multiple_files</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">label_visibility</span><span class="o">=</span><span class="s2">&quot;collapsed&quot;</span><span class="p">)</span>
+                <span class="n">resumes</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">if</span> <span class="n">resume_files</span> <span class="ow">and</span> <span class="n">template_file</span><span class="p">:</span>
+                    <span class="n">gen_prop_button</span> <span class="o">=</span> <span class="n">st</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="s2">&quot;Generate&quot;</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">gen_prop_button</span><span class="p">:</span>
+                        <span class="k">with</span> <span class="n">st</span><span class="o">.</span><span class="n">spinner</span><span class="p">(</span><span class="s1">&#39;This may take a couple of minutes, so grab a cup of coffee for now!&#39;</span><span class="p">):</span>
+                            <span class="k">for</span> <span class="n">resume</span> <span class="ow">in</span> <span class="n">resume_files</span><span class="p">:</span>
+                                <span class="k">if</span> <span class="n">resume</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.docx&#39;</span><span class="p">):</span>
+                                    <span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">(</span><span class="n">delete</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s2">&quot;.docx&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">temp_file</span><span class="p">:</span>
+                                        <span class="n">temp_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">resume</span><span class="o">.</span><span class="n">getbuffer</span><span class="p">())</span>
+                                        <span class="n">resume_temp_file_path</span> <span class="o">=</span> <span class="n">temp_file</span><span class="o">.</span><span class="n">name</span>
+                                    <span class="n">resumes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">extract_text_from_docx</span><span class="p">(</span><span class="n">resume_temp_file_path</span><span class="p">))</span>
+                                <span class="k">elif</span> <span class="n">resume</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.pdf&#39;</span><span class="p">):</span>
+                                    <span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">(</span><span class="n">delete</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s2">&quot;.pdf&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">temp_file</span><span class="p">:</span>
+                                        <span class="n">temp_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">resume</span><span class="o">.</span><span class="n">getbuffer</span><span class="p">())</span>
+                                        <span class="n">resume_temp_file_path</span> <span class="o">=</span> <span class="n">temp_file</span><span class="o">.</span><span class="n">name</span>
+                                    <span class="n">resumes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">extract_text_from_pdf</span><span class="p">(</span><span class="n">resume_temp_file_path</span><span class="p">))</span>
+                            
+                            <span class="n">concise_job_description</span> <span class="o">=</span> <span class="n">job_description</span><span class="p">[</span><span class="n">job_description</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;Responsibilities&quot;</span><span class="p">):</span><span class="n">job_description</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;Education&quot;</span><span class="p">)]</span>
+                            <span class="n">data</span> <span class="o">=</span> <span class="n">generate_proposal</span><span class="p">(</span><span class="n">resumes</span><span class="p">,</span> <span class="n">concise_job_description</span><span class="p">,</span> <span class="n">job_title</span><span class="p">)</span>
+                            <span class="n">data</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">get_title_page_info</span><span class="p">(</span><span class="n">pdf_text</span><span class="p">))</span>
+                            <span class="n">fill_document</span><span class="p">(</span><span class="n">template_file</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+                            <span class="n">data_str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+                            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                                <span class="n">data_str</span> <span class="o">+=</span> <span class="n">key</span> <span class="o">+</span> <span class="s2">&quot;: &quot;</span> <span class="o">+</span> <span class="n">value</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">&quot;</span>
+                            <span class="n">st</span><span class="o">.</span><span class="n">session_state</span><span class="o">.</span><span class="n">display_text</span> <span class="o">=</span> <span class="n">data_str</span>
+                            <span class="n">st</span><span class="o">.</span><span class="n">session_state</span><span class="o">.</span><span class="n">text_area_label</span> <span class="o">=</span> <span class="s2">&quot;Proposal Preview:&quot;</span>
+            <span class="c1"># Text box that will be updated to display everything</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">st</span><span class="o">.</span><span class="n">session_state</span><span class="o">.</span><span class="n">last_pressed_button</span> <span class="o">==</span> <span class="s2">&quot;resume_upload&quot;</span><span class="p">:</span>
+                <span class="n">st</span><span class="o">.</span><span class="n">text_area</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="n">st</span><span class="o">.</span><span class="n">session_state</span><span class="o">.</span><span class="n">text_area_label</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="s2">&quot;display_text&quot;</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">350</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">st</span><span class="o">.</span><span class="n">session_state</span><span class="o">.</span><span class="n">disabled</span> <span class="o">=</span> <span class="kc">True</span>
+        
+    <span class="k">elif</span> <span class="n">st</span><span class="o">.</span><span class="n">session_state</span><span class="p">[</span><span class="s2">&quot;authentication_status&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+        <span class="n">st</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;Username/password is incorrect&#39;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">st</span><span class="o">.</span><span class="n">session_state</span><span class="p">[</span><span class="s2">&quot;authentication_status&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">st</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;Please enter your username and password&#39;</span><span class="p">)</span></div>
+
+ 
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Jefferson Cheng, Arijeet Bhaduri, Md Rifat Bin Yusuf.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

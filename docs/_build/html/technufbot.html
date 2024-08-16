@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>technufbot package &mdash; Technuf Proposal Bot 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=8d563738"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="technufbot" href="modules.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Technuf Proposal Bot
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">technufbot</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">technufbot package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#module-technufbot">Module contents</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#technufbot.download_interview_questions"><code class="docutils literal notranslate"><span class="pre">download_interview_questions()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#technufbot.extract_relevant_sections"><code class="docutils literal notranslate"><span class="pre">extract_relevant_sections()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#technufbot.extract_text_from_docx"><code class="docutils literal notranslate"><span class="pre">extract_text_from_docx()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#technufbot.extract_text_from_pdf"><code class="docutils literal notranslate"><span class="pre">extract_text_from_pdf()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#technufbot.fill_document"><code class="docutils literal notranslate"><span class="pre">fill_document()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#technufbot.format_resume"><code class="docutils literal notranslate"><span class="pre">format_resume()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#technufbot.generate_interview_questions"><code class="docutils literal notranslate"><span class="pre">generate_interview_questions()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#technufbot.generate_job_description"><code class="docutils literal notranslate"><span class="pre">generate_job_description()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#technufbot.generate_proposal"><code class="docutils literal notranslate"><span class="pre">generate_proposal()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#technufbot.generate_resume_descriptions"><code class="docutils literal notranslate"><span class="pre">generate_resume_descriptions()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#technufbot.generate_sos"><code class="docutils literal notranslate"><span class="pre">generate_sos()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#technufbot.get_job_title_docx"><code class="docutils literal notranslate"><span class="pre">get_job_title_docx()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#technufbot.get_job_title_pdf"><code class="docutils literal notranslate"><span class="pre">get_job_title_pdf()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#technufbot.get_title_page_info"><code class="docutils literal notranslate"><span class="pre">get_title_page_info()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#technufbot.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Technuf Proposal Bot</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">technufbot</a></li>
+      <li class="breadcrumb-item active">technufbot package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/technufbot.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="technufbot-package">
+<h1>technufbot package<a class="headerlink" href="#technufbot-package" title="Link to this heading"></a></h1>
+<section id="module-technufbot">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-technufbot" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="technufbot.download_interview_questions">
+<span class="sig-prename descclassname"><span class="pre">technufbot.</span></span><span class="sig-name descname"><span class="pre">download_interview_questions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/technufbot.html#download_interview_questions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#technufbot.download_interview_questions" title="Link to this definition"></a></dt>
+<dd><p>Option to download interview questions generated given a text string</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>text</strong> (<em>string</em>) – interview questions that were generated</p></li>
+<li><p><strong>name</strong> (<em>string</em>) – name of candidate</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="technufbot.extract_relevant_sections">
+<span class="sig-prename descclassname"><span class="pre">technufbot.</span></span><span class="sig-name descname"><span class="pre">extract_relevant_sections</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/technufbot.html#extract_relevant_sections"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#technufbot.extract_relevant_sections" title="Link to this definition"></a></dt>
+<dd><p>Extracts “Scope of Work” and other required sections given a text string</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>text</strong> (<em>string</em>) – String text from a file</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Returns the relevant sections of that text, if none, will return empty string</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>string</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="technufbot.extract_text_from_docx">
+<span class="sig-prename descclassname"><span class="pre">technufbot.</span></span><span class="sig-name descname"><span class="pre">extract_text_from_docx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">docx_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/technufbot.html#extract_text_from_docx"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#technufbot.extract_text_from_docx" title="Link to this definition"></a></dt>
+<dd><p>Extracts all text from a docx file into a string</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>docx_path</strong> (<em>string</em>) – File path to the docx file</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Returns the text from that docx file</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>string</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="technufbot.extract_text_from_pdf">
+<span class="sig-prename descclassname"><span class="pre">technufbot.</span></span><span class="sig-name descname"><span class="pre">extract_text_from_pdf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/technufbot.html#extract_text_from_pdf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#technufbot.extract_text_from_pdf" title="Link to this definition"></a></dt>
+<dd><p>Extracts all text from a PDF file into a string</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>file_path</strong> (<em>string</em>) – File path to the PDF file</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Returns the text from that PDF file</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>string</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="technufbot.fill_document">
+<span class="sig-prename descclassname"><span class="pre">technufbot.</span></span><span class="sig-name descname"><span class="pre">fill_document</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">template_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/technufbot.html#fill_document"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#technufbot.fill_document" title="Link to this definition"></a></dt>
+<dd><p>Fills a word document template with the data dict given a template_path, and lets you download the docx file</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>template_path</strong> (<em>string</em>) – path of template file</p></li>
+<li><p><strong>data</strong> (<em>dict</em>) – dict of data to replace in the template</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="technufbot.format_resume">
+<span class="sig-prename descclassname"><span class="pre">technufbot.</span></span><span class="sig-name descname"><span class="pre">format_resume</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">resume</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/technufbot.html#format_resume"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#technufbot.format_resume" title="Link to this definition"></a></dt>
+<dd><p>Takes a resume string and reformats that resume to the format that Technuf uses</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>resume</strong> (<em>string</em>) – String text from a resume file</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>OpenAI generated response formatting the resume</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>string</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="technufbot.generate_interview_questions">
+<span class="sig-prename descclassname"><span class="pre">technufbot.</span></span><span class="sig-name descname"><span class="pre">generate_interview_questions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">job_description</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resume</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/technufbot.html#generate_interview_questions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#technufbot.generate_interview_questions" title="Link to this definition"></a></dt>
+<dd><p>Generates interview questions and answers given a job_description string and a resume string</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>job_description</strong> (<em>string</em>) – The generated job description</p></li>
+<li><p><strong>resume</strong> (<em>string</em>) – String text from a resume file</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>OpenAI generated interview questions</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>string</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="technufbot.generate_job_description">
+<span class="sig-prename descclassname"><span class="pre">technufbot.</span></span><span class="sig-name descname"><span class="pre">generate_job_description</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/technufbot.html#generate_job_description"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#technufbot.generate_job_description" title="Link to this definition"></a></dt>
+<dd><p>Generates a job description string in the Technuf format given a text string</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>text</strong> (<em>string</em>) – String text from a file</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Returns the OpenAI generated job description</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>string</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="technufbot.generate_proposal">
+<span class="sig-prename descclassname"><span class="pre">technufbot.</span></span><span class="sig-name descname"><span class="pre">generate_proposal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">resumes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">concise_job_description</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">job_title</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/technufbot.html#generate_proposal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#technufbot.generate_proposal" title="Link to this definition"></a></dt>
+<dd><p>Generates the proposal given up to 3 resume strings, a concise_job_description string, and a job_title string
+This returns a data dict with all of the necessary information</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>resumes</strong> (<em>list</em>) – list of resumes</p></li>
+<li><p><strong>concise_job_description</strong> (<em>string</em>) – a concise version of the job description with uncessary info removed</p></li>
+<li><p><strong>job_title</strong> (<em>string</em>) – job title extracted from the file</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict with all the data needed to generate the proposal</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="technufbot.generate_resume_descriptions">
+<span class="sig-prename descclassname"><span class="pre">technufbot.</span></span><span class="sig-name descname"><span class="pre">generate_resume_descriptions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">resume</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">job_description</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/technufbot.html#generate_resume_descriptions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#technufbot.generate_resume_descriptions" title="Link to this definition"></a></dt>
+<dd><p>Generates a resume description using OpenAI API for a candidate given a resume string and the job description string</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>resume</strong> (<em>string</em>) – Resume from a file</p></li>
+<li><p><strong>job_description</strong> (<em>string</em>) – The generated job description</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>OpenAI generated resume description</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>string</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="technufbot.generate_sos">
+<span class="sig-prename descclassname"><span class="pre">technufbot.</span></span><span class="sig-name descname"><span class="pre">generate_sos</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">job_description</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">job_title</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/technufbot.html#generate_sos"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#technufbot.generate_sos" title="Link to this definition"></a></dt>
+<dd><p>Generates a scope of services given a job_description string, a data dict, a num int, and a job title string</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>job_description</strong> (<em>string</em>) – The generated job description</p></li>
+<li><p><strong>data</strong> (<em>dict</em>) – The dict of content that we will be replacing in the template</p></li>
+<li><p><strong>num</strong> (<em>int</em>) – Number of candidates (up to 3)</p></li>
+<li><p><strong>job_title</strong> (<em>string</em>) – The extracted job title</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>OpenAI generated sos</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>string</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="technufbot.get_job_title_docx">
+<span class="sig-prename descclassname"><span class="pre">technufbot.</span></span><span class="sig-name descname"><span class="pre">get_job_title_docx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/technufbot.html#get_job_title_docx"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#technufbot.get_job_title_docx" title="Link to this definition"></a></dt>
+<dd><p>Extracts the job title from a docx document using NLP</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>text</strong> (<em>string</em>) – String text from a file</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Returns the title from that docx file, if not found, returns “No job title found”</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>string</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="technufbot.get_job_title_pdf">
+<span class="sig-prename descclassname"><span class="pre">technufbot.</span></span><span class="sig-name descname"><span class="pre">get_job_title_pdf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/technufbot.html#get_job_title_pdf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#technufbot.get_job_title_pdf" title="Link to this definition"></a></dt>
+<dd><p>Extracts the job title from a PDF document using NLP</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>text</strong> (<em>string</em>) – String text from a file</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Returns the title from that PDF file, if not found, returns “No job title found”</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>string</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="technufbot.get_title_page_info">
+<span class="sig-prename descclassname"><span class="pre">technufbot.</span></span><span class="sig-name descname"><span class="pre">get_title_page_info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/technufbot.html#get_title_page_info"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#technufbot.get_title_page_info" title="Link to this definition"></a></dt>
+<dd><p>Extracts all necessary information from the text string and stores it in a dict</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>text</strong> (<em>string</em>) – String text from a file</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Returns the title page information stored in a dict</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="technufbot.main">
+<span class="sig-prename descclassname"><span class="pre">technufbot.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/technufbot.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#technufbot.main" title="Link to this definition"></a></dt>
+<dd><p>Main function that has a login page and all of the streamlit elements</p>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="modules.html" class="btn btn-neutral float-left" title="technufbot" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Jefferson Cheng, Arijeet Bhaduri, Md Rifat Bin Yusuf.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
